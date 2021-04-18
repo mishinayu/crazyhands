@@ -16,7 +16,7 @@ WSO2 Enterprise Integrator 6.5.0 + BPS, WSO2 Api Manager 2.6.0., VerneMQ 1.10.4.
 6. установка коллекций на Ansible-master (для версий 2.9+) командой: ```ansible-galaxy collection install community.docker``` и ```ansible-galaxy collection install community.general```
 ### Установка:
 1. Установить ansible требуемой версии на одном из серверов имеющих непосредственный доступ по 22 порту: ```yum install ansible```
-2. Получить код плейбуков из репозитория: ```git clone https://git.mos.ru/kgh/hunters/deploy_hunters.git```
+2. Получить код плейбуков из репозитория: ```git clone https://``
 3. Сгенерировать пару (публичный и приватный) ключей на ansible-master сервере для root пользователя (при наличии, пропустить этот шаг): ```ssh-keygen -t rsa```
 4. Скопировать публичный ключ root пользователя на Ansible-master на все таргеты (root->root): ```ssh-copy-id -i ~/.ssh/id_rsa.pub root@10.19.72.205```
 5. Задать переменные в ./role/default/main.yml, ./role/var/main.yml и ./group_vars/all
