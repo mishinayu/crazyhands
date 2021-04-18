@@ -1,0 +1,14 @@
+# Module: beat
+# Docs: https://www.elastic.co/guide/en/beats/metricbeat/7.10/metricbeat-module-beat.html
+
+- module: beat
+  metricsets:
+   - stats
+   - state
+  period: 10s
+  hosts: ["{% for member in groups['elk'] %}http://{{ hostvars[member].ansible_default_ipv4.address }}:5066{% if not loop.last %}","{% endif %}{% endfor %}"]
+  username: "{{ elastic_user }}"
+  password: "{{ elastic_password }}"
+  cluster_uuid: "{{ cluster_uid }}"
+  xpack.enabled: true
+

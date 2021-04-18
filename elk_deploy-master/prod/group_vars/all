@@ -1,0 +1,6 @@
+hostmetadata: '"Linux" "MON_prod"'
+env: mon-prod  #avaliable values: idm, idm-test, idm-dev
+elk_cluster_master: 10.206.171.134
+kibana_hosts: "10.206.171.134"
+cluster_uid: xxxxxxxxxxxxxxxxx
+master_ip: 10.206.171.134

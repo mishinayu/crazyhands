@@ -1,0 +1,4 @@
+---
+# defaults file for common
+docker_install: true
+docker_version: 19.03.1

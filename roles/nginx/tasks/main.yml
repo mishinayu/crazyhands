@@ -1,0 +1,85 @@
+---
+# tasks file for nginx
+- name: "Enable nginx repo"
+  template:
+    src: nginx.repo.j2
+    dest: /etc/yum.repos.d/nginx.repo
+    owner: root
+    group: root
+    mode: 0644
+  when: nginx_yum_repo_enabled
+  tags: bal
+
+- name: "Ensure a list of nginx related packages are installed"
+  yum:
+    name: "{{ packages }}"
+  vars:
+     packages:
+     - openssl
+     - nginx
+     - python2-cryptography
+     state: latest
+  tags: bal
+
+- name: "Generate an OpenSSL private key with the default values (4096 bits, RSA)"
+  openssl_privatekey:
+    path: "{{ server_pem }}"
+  tags: bal, ssl
+
+- name: "Generate an OpenSSL Certificate Signing Request"
+  openssl_csr:
+    path: "{{ server_csr }}"
+    privatekey_path: "{{ server_pem }}"
+    common_name: "{{ env }}.{{ corpdomain }}"
+  tags: bal, ssl
+
+- name: "Generate a Self Signed OpenSSL certificate"
+  openssl_certificate:
+    path: "{{ server_crt }}"
+    privatekey_path: "{{ server_pem }}"
+    csr_path: "{{ server_csr }}"
+    provider: selfsigned
+  tags: bal, ssl
+
+- name: "Copy certificate to ansible-master"
+  fetch:
+    src: "{{ server_crt }}"
+    dest: "/etc/ssl/certs/{{ cert_filename }}"
+    flat: yes
+  tags: bal, ssl
+
+- name:  "Nginx blacklist creation"
+  copy:
+    src: "{{ role_path }}/files/blacklist.conf"
+    dest: /etc/nginx/conf.d
+    owner: root
+    group: root
+    mode: 0644
+  tags: bal
+
+- name: "Add server Vhost templates" 
+  template:
+    src: conf.j2
+    dest: "{{ confd }}/{{ item.name }}.http.conf"
+    owner: root
+    group: root
+    mode: 0644
+  with_items:
+  - { name: "hnm.{{ env }}.{{ corpdomain }}", server1: "{{ groups['hadoop'][0] }}", port: "{{ hnm_http_port }}" }
+  - { name: "hrm.{{ env }}.{{ corpdomain }}", server1: "{{ groups['hadoop'][0] }}", port: "{{ hrm_http_port }}" }
+  - { name: "web-ui.{{ env }}.{{ corpdomain }}", server1: "{{ groups['spark'][0] }}", port: "{{ webui_http_port }}" }
+  - { name: "hbase.ms.{{ env }}.{{ corpdomain }}", server1: "{{ groups['hadoop'][0] }}", port: "{{ hbase_ms_http_port }}"}
+  - { name: "hbase.rs.{{ env }}.{{ corpdomain }}", server1: "{{ groups['hadoop'][1] }}", port: "{{ hbase_rs_http_port }}"}
+  - { name: "hue.{{ env }}.{{ corpdomain }}", server1: "{{ groups['hue'][0] }}", port: "{{ hue_http_port }}"}
+  tags: bal
+
+- name: "Enable and start nginx"
+  systemd:
+    name: nginx
+    state: restarted
+    enabled: yes
+    daemon_reload: yes
+  tags: bal
+
+...
+

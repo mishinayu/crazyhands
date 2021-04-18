@@ -1,0 +1,224 @@
+---
+# tasks file for spark
+- name: "Install Scala software"
+  yum:
+    name: https://downloads.lightbend.com/scala/2.13.0/scala-2.13.0.rpm
+    state: present
+  tags: spark
+
+#- name: "Create spark Group"
+#  group:
+#    name: "{{ spark_group }}"
+#    state: present
+#  tags: spark
+
+#- name: "Create spark User"
+#  user:
+#    name: "{{ spark_user }}"
+#    comment: "spark administrator"
+#    group: "{{ spark_group }}"
+#    create_home: yes
+#    shell: /bin/bash
+#  tags: spark
+
+#- name: "Create SSH keys for the spark user and put it into this role's files directory"
+#  shell: ssh-keygen -f "{{role_path}}/files/spark_user_id_rsa" -t rsa -N ''
+#  args:
+#    creates: "{{ role_path }}/files/spark_user_id_rsa"
+#  delegate_to: localhost
+#  run_once: true
+#  tags: spark
+
+#- name: "Make sure SSH directory for spark user exists"
+#  file:
+#    path: "{{ spark_uhome }}/.ssh"
+#    state: directory
+#    mode: 0700
+#    owner: "{{ spark_user }}"
+#    group: "{{ spark_group }}"
+#  tags: spark
+
+#- name: "Copy private SSH key for spark user"
+#  copy:
+#    src: spark_user_id_rsa
+#    dest: "{{ spark_uhome }}/.ssh/id_rsa"
+#    mode: 0600
+#    owner: "{{ spark_user }}"
+#    group: "{{ spark_group }}"
+#  tags: spark
+
+#- name: "Copy public SSH key for spark user"
+#  copy:
+#    src: spark_user_id_rsa.pub
+#    dest: "{{ spark_uhome }}/.ssh/id_rsa.pub"
+#    mode: 0644
+#    owner: "{{ spark_user }}"
+#    group: "{{ spark_group }}"
+#  tags: spark
+
+#- name: "Cross authorize this key among all spark servers"
+#  lineinfile:
+#    path: "{{ spark_uhome }}/.ssh/authorized_keys"
+#    create: yes
+#    mode: 0600
+#    owner: "{{ spark_user }}"
+#    group: "{{ spark_group }}"
+#    line: "{{ lookup('file', 'spark_user_id_rsa.pub') }}"
+#    state: present
+#  tags: spark
+
+- name: "Download spark version {{ spark_version }}"
+  get_url:
+    url: "{{ spark_download_url }}"
+    dest: "/tmp/spark-{{ spark_version }}.tar.gz"
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+  tags: spark
+
+- name: "Create /etc/spark directory"
+  file:
+    path: /etc/spark
+    state: directory
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+    mode: 0755
+  tags: spark
+
+- name: Check if Spark has been already downloaded and unpacked
+  stat:
+    path: "{{ spark_home }}/conf"
+  register: dir
+  tags: spark
+
+- name: "Extract spark archive"
+  unarchive:
+    src: "/tmp/spark-{{ spark_version }}.tar.gz"
+    dest: /etc/spark
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+    remote_src: yes
+  become: true
+  become_user: "{{ hadoop_user }}"
+  when: not dir.stat.exists
+  tags: spark
+
+- name: "Add spark environment variables to .bash_profile"
+  blockinfile:
+    path: "{{ hadoop_uhome}}/.bash_profile"
+    create: yes
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+    mode: 0400
+    block: |
+      export SPARK_HOME={{ spark_home }}
+      export HADOOP_HOME={{ hadoop_home }}
+      export HBASE_HOME={{ hbase_home }}
+      export PHOENIX_HOME={{ phoenix_home }}
+      export HIVE_HOME={{ hive_home }}
+      export HIVE_CONF_DIR={{ hive_home }}/conf
+      export PATH=$PATH:{{ hive_home }}/bin:{{ hadoop_home }}/bin:{{ hadoop_home }}/sbin:{{ hbase_home }}/bin:{{ phoenix_home }}/bin:{{ spark_bin }}
+    state: present
+  tags: spark
+
+- name: "Copy template spark-env_worker.sh.j2"
+  template:
+    src: "spark-env_worker.sh.j2"
+    dest: "{{ spark_home }}/conf/spark-env.sh"
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+    mode: 0755
+  tags: spark
+
+- name: "Copy template spark-env_master.sh.j2"
+  template:
+    src: "spark-env_master.sh.j2"
+    dest: "{{ spark_home }}/conf/spark-env.sh"
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+    mode: 0755
+  when: spark_master_ip in inventory_hostname
+  tags: spark
+
+- name: "Copy template slaves.j2"
+  template:
+    src: "slaves.j2"
+    dest: "{{ spark_home}}/conf/slaves"
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+    mode: 0664
+  tags: spark
+
+- name: "Copy template spark-defaults.conf.j2"
+  template:
+    src: "spark-defaults.conf.j2"
+    dest: "{{ spark_home }}/conf/spark-defaults.conf"
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+    mode: 0664
+  tags: spark
+
+- name: "Create a symbolic link hbase-site.xml"
+  ansible.builtin.file:
+    src: "{{ hbase_home }}/conf/hbase-site.xml"
+    dest: "{{ spark_home }}/conf/hbase-site.xml"
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+    state: link
+  tags: spark
+
+- name: "Create a symbolic link hive-site.xml"
+  ansible.builtin.file:
+    src: "{{ hive_home }}/conf/hive-site.xml"
+    dest: "{{ spark_home }}/conf/hive-site.xml"
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+    state: link
+  when: spark_master_ip in inventory_hostname
+  tags: spark
+
+- name: "Copy template spark.service.j2"
+  template:
+    src: "spark.service.j2"
+    dest: /etc/systemd/system/spark.service
+  when:
+    - ansible_distribution == "RedHat" and ansible_distribution_major_version > '6'
+    - spark_master_ip in inventory_hostname
+  tags: spark
+
+- name: "Enable and start spark cluster"
+  systemd:
+    name: spark
+    state: restarted
+    enabled: yes
+    daemon_reload: yes
+  when: spark_master_ip in inventory_hostname
+  tags: spark
+
+
+########################################
+#Deploy directory######################
+
+- name: "Create /etc/spark directory"
+  file:
+    path:  "{{ spark_home}}/scripts/"
+    state: directory
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+    mode: 0755
+  tags: spark,spark_deploy
+
+- name: "Copy temlate start_all.sh.j2"
+  template:
+    src: "start_all.sh.j2"
+    dest: "{{ spark_home}}/scripts/"
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+    mode: 0755
+  when:
+    - spark_master_ip in inventory_hostname
+  tags: spark, spark_deploy
+
+
+
+...
+

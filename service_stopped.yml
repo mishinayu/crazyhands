@@ -1,0 +1,36 @@
+---
+#file  all stopped service 
+
+- name: "Stopped MDM project"
+  hosts: all
+  tasks:
+    - name: "Display  hostnames of MDM"
+      debug:
+        msg: "The hostname is {{ ansible_hostname }} and the OS is {{ ansible_os_family }}"
+
+    - name: "Service stopped"
+      systemd:
+        name: "{{ item }}"
+        enabled: yes
+        state: stopped
+        daemon_reload: yes
+      with_items:
+      - zabbix-agent
+      - nginx
+      - docker
+      - wso2mi
+      - wso2mi.dashboard
+      - hive
+      - apache-ignite@default-config.xml
+      - hbase
+      - hadoop
+      - kafka.service
+      - zookeeper.service
+      - apache.zookeeper
+      - spark
+      - postgresql-11
+      tags: stop
+
+
+...
+

@@ -1,0 +1,17 @@
+---
+- hosts: test
+  remote_user: root
+  tasks:
+   - name: Install Mysql
+     command: dnf -y install mysql
+
+   - name: Mysql service restart
+     command: systemctl start mysqld    
+
+   - name: Mysql service restart
+     command: systemctl enable --now mysqld
+
+   - name: Mysql service restart
+     command: systemctl status mysqld
+
+

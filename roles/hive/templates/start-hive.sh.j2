@@ -1,0 +1,29 @@
+#!/bin/bash
+
+export HADOOP_HOME={{ hadoop_home }}
+export HIVE_HOME={{ hive_home }}
+export PATH=$PATH:{{ hive_home }}/bin:{{ hadoop_home }}/bin
+
+startme() {
+  if [[ ! -d {{ hive_uhome }}/hiveserver2log ]]	
+  then
+ 	mkdir -p {{ hive_uhome }}/hiveserver2log
+  fi
+  echo "Starting hiveserver.."
+  cd {{ hive_uhome }}/hiveserver2log
+  nohup hive --service hiveserver2 &
+}
+
+stopme(){
+  echo "Stoping hiveserver.."
+  kill $(ps aux | grep -i hiveserver | awk {'print $2'}) 
+}
+case "$1" in 
+    start)   startme ;;
+    stop)    stopme ;;
+    restart) stopme; startme ;;
+    *) echo "usage: $0 start|stop|restart" >&2
+       exit 1
+       ;;
+esac
+

@@ -1,0 +1,23 @@
+[Unit]
+Description=Apache Hbase cluster
+After=network.target
+After=systemd-user-sessions.service
+After=network-online.target
+After=hadoop.service
+After=apache.zookeeper.service
+
+[Service]
+User=hadoop
+Type=forking
+ExecStart={{ hbase_home }}/bin/start-hbase.sh
+ExecStop={{ hbase_home }}/bin/stop-hbase.sh
+TimeoutSec=30
+Restart= on-failure
+RestartSec= 30
+StartLimitInterval=350
+StartLimitBurst=10
+
+[Install]
+WantedBy=multi-user.target
+
+

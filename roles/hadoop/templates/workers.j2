@@ -1,0 +1,4 @@
+{% for host in groups['hadoop'] %}
+{{ hostvars[host]['ansible_hostname'] }}.passport.local
+{% endfor %}
+

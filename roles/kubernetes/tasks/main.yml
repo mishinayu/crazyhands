@@ -1,0 +1,207 @@
+---
+# tasks file for kubernetes
+- name: "create kubernetes group"
+  group:
+    name: "{{ kubernetes_group }}"
+    state: present
+  tags: kubernetes
+
+- name: "Create kubernetes User"
+  user:
+    name: "{{ kubernetes_user }}"
+    group: "{{ kubernetes_group }}"
+    groups: docker
+    create_home: yes
+    shell: /bin/bash
+  tags: kubernetes
+
+- name: "Create SSH keys for the kubernetes user and put it into this role's files directory"
+  shell: ssh-keygen -f "{{role_path}}/files/kubernetes_user_id_rsa" -t rsa -N ''
+  args:
+    creates: "{{ role_path }}/files/kubernetes_user_id_rsa"
+  delegate_to: localhost
+  run_once: true
+  tags: kubernetes
+
+- name: "Make sure SSH directory for kubernetes user exists"
+  file:
+    path: "{{ kubernetes_uhome }}/.ssh"
+    state: directory
+    mode: 0700
+    owner: "{{ kubernetes_user }}"
+    group: "{{ kubernetes_group }}"
+  tags: kubernetes
+
+- name: "Copy private SSH key for kubernetes user"
+  copy:
+    src: kubernetes_user_id_rsa
+    dest: "{{ kubernetes_uhome }}/.ssh/id_rsa"
+    mode: 0600
+    owner: "{{ kubernetes_user }}"
+    group: "{{ kubernetes_group }}"
+  tags: kubernetes
+
+- name: "Copy public SSH key for kubernetes user"
+  copy:
+    src: kubernetes_user_id_rsa.pub
+    dest: "{{ kubernetes_uhome }}/.ssh/id_rsa.pub"
+    mode: 0644
+    owner: "{{ kubernetes_user }}"
+    group: "{{ kubernetes_group }}"
+  tags: kubernetes
+
+- name: "Cross authorize this key among all kubernetes servers"
+  lineinfile:
+    path: "{{ kubernetes_uhome }}/.ssh/authorized_keys"
+    create: yes
+    mode: 0600
+    owner: "{{ kubernetes_user }}"
+    group: "{{ kubernetes_group }}"
+    line: "{{ lookup('file', 'kubernetes_user_id_rsa.pub') }}"
+    state: present
+  tags: kubernetes
+
+- name: "Ensure SELinux is disabled"
+  selinux:
+    state: disabled
+  tags: kubernetes
+
+- name: "Change ssh_config parameter AllowTcpForwarding to yes"
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    state: present
+    regexp: '^AllowTcpForwarding'
+    line: 'AllowTcpForwarding yes'
+  tags: kubernetes 
+ 
+- name: "Reload sshd service"
+  systemd:
+    name: sshd
+    state: reloaded
+    enabled: yes
+  tags: kubernetes
+
+- name: "Remove swapfile from /etc/fstab"
+  mount:
+    name: swap
+    fstype: swap
+    state: absent
+  tags: kubernetes
+
+- name: "Disable swap"
+  command: swapoff -a
+  when: ansible_swaptotal_mb > 0
+  tags: kubernetes
+
+- modprobe:
+    name: br_netfilter
+    state: present  
+  tags: kubernetes
+
+- name: "Modify sysctl entries"
+  sysctl:
+    name: '{{ item.key }}'
+    value: '{{ item.value }}'
+    sysctl_set: yes
+    state: present
+    reload: yes
+  with_items:
+    - {key: net.bridge.bridge-nf-call-ip6tables, value: 1}
+    - {key: net.bridge.bridge-nf-call-iptables,  value: 1}
+    - {key: net.ipv4.ip_forward,  value: 1}  
+  tags: kubernetes
+
+- name: "Enable and start docker"
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+  tags: kubernetes
+
+- name: "Enable kubernetes repo"
+  template:
+    src: kubernetes.repo.j2
+    dest: /etc/yum.repos.d/kubernetes.repo
+    owner: root
+    group: root
+    mode: 0644
+  when: kubernetes_yum_repo_enabled
+  tags: kubernetes
+
+- name: "kubernetes | Install all the required dependencies | yum"
+  yum:
+    name: 
+    - kubeadm
+    - kubelet
+    - kubectl
+    state: present
+    disable_gpg_check: yes
+  tags: kubernetes
+
+- name: "Enable and start kubelet"
+  systemd:
+    name: kubelet
+    state: started
+    enabled: yes
+  tags: kubernetes      
+
+- name: "Block of tasks on master node"
+  block:
+    - name: "Download rke"
+      get_url:
+        url: https://github.com/rancher/rke/releases/download/v1.1.4/rke_linux-amd64
+        dest: /usr/local/bin/rke
+        mode: a+x
+        owner: root
+        group: root
+      tags: kubernetes
+
+    - name: "Kubernetes | Copy template cluster.yml.j2"
+      template:
+        src: cluster.yml.j2
+        dest: "{{ kubernetes_uhome }}/cluster.yml"
+        owner: "{{ kubernetes_user }}"
+        group: "{{ kubernetes_group }}"
+        mode: 0644
+      tags: kubernetes
+
+    - name: "Add KUBECONFIG environment variables to .bash_profile"
+      blockinfile:
+        path: "{{ kubernetes_uhome }}/.bash_profile"
+        create: yes
+        owner: "{{ kubernetes_user }}"
+        group: "{{ kubernetes_group }}"
+        mode: 0400
+        block: |
+          export KUBECONFIG="{{ kubernetes_uhome }}/kube_config_cluster.yml"
+        state: present
+      tags: kubernetes
+
+    - name: "Kuberenetes init rke config"
+      shell: /usr/local/bin/rke up --config cluster.yml
+      become: true
+      become_user: "{{ kubernetes_user }}"
+      args:
+        chdir: "{{ kubernetes_uhome }}"
+      register: register_result
+      tags: kubernetes
+
+    - name: "Debug init rke register"
+      debug:
+        var: register_result
+      tags: kubernetes
+  when: master_ip in inventory_hostname
+
+
+- name: "Add KUBECONFIG environment variables to .bash_profile"
+  blockinfile:
+    path: "{{ kubernetes_uhome }}/.bash_profile"
+    create: yes
+    owner: "{{ kubernetes_user }}"
+    group: "{{ kubernetes_group }}"
+    mode: 0400
+    block: | 
+      export KUBECONFIG="{{ kubernetes_uhome }}/kube_config_cluster.yml"
+    state: present
+  tags: kubernetes
+

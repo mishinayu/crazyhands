@@ -1,0 +1,15 @@
+---
+# defaults file for cassandra
+cassandra_cluster_name: 'MDM Test Cluster' 
+cassandra_yum_repo_enabled: true
+cassandra_home: /etc/cassandra
+cassandra_uhome: /home/cassandra
+cassandra_user: cassandra
+cassandra_network_interface: "{% if ansible_default_ipv4 is defined %}{{ ansible_default_ipv4.interface }}{% else %}eth0{% endif %}"
+cassandra_group: cassandra
+cassandra_seed_resolution: dynamic
+cassandra_seed_groupname: cassandra
+cassandra_groupname: cassandra
+cassandra_seeds: []
+cassandra_seed_resolved: '{% if cassandra_seed_resolution == "static" %}{{ cassandra_seeds | join(",")}}{% else %}{% for host in groups[cassandra_seed_groupname] %}{{hostvars[host]["ansible_" + cassandra_network_interface]["ipv4"]["address"]}}{% if not loop.last %},{% endif %}{% endfor %}{% endif %}'
+cassandra_all_instances: '{{ groups[cassandra_seed_groupname]|union(groups[cassandra_groupname]|default([]))|reverse|list }}'

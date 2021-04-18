@@ -1,0 +1,26 @@
+---
+# tasks file for aig
+
+- name: "Ignite | Add ignite repo"
+  copy:
+    src: "{{ role_path }}/files/ignite.repo"
+    dest: /etc/yum.repos.d/ignite.repo
+    mode: 0644
+    owner: root
+    group: root
+  tags: aig
+
+- name: "Ignite | Install ignite package"
+  yum:
+    name: apache-ignite
+    state: present
+  tags: aig
+
+- name: "Ignite | Enable and start ignite"
+  systemd:
+    name: apache-ignite@default-config.xml
+    state: started
+    enabled: yes
+  tags: aig
+  
+...

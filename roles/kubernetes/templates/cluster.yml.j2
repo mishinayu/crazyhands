@@ -1,0 +1,27 @@
+cluster_name: k8s-nsk
+name: k8s-nsk
+enable_cluster_alerting: true
+enable_cluster_monitoring: true
+ignore_docker_version: true
+
+nodes:
+  - address: {{ node_master }}
+    user: kubernetes
+    role: [controlplane, etcd]
+    ssh_key_path: /home/kubernetes/.ssh/id_rsa
+
+  - address: {{ node1_worker }}
+    user: kubernetes
+    role: [worker]
+    labels:
+      worker: yes
+    ssh_key_path: /home/kubernetes/.ssh/id_rsa
+
+  - address: {{ node2_worker }}
+    user: kubernetes
+    role: [worker]
+    labels:
+      worker: yes
+    ssh_key_path: /home/kubernetes/.ssh/id_rsa
+
+

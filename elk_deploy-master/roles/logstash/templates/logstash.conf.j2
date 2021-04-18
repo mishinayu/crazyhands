@@ -1,0 +1,21 @@
+# Sample Logstash configuration for creating a simple
+# Beats -> Logstash -> Elasticsearch pipeline.
+
+
+output {
+  elasticsearch {
+    hosts => ["{% for member in groups['elk'] %}{{ hostvars[member]['ansible_default_ipv4']['address'] }}:9200{% if not loop.last %}","{% endif %}{% endfor %}"]
+    index => "%{[@metadata][beat]}-%{[@metadata][version]}-%{+YYYY.MM.dd}"
+    user => "{{ elastic_user }}"
+    password => "{{ elastic_password }}"
+  }
+  elasticsearch {
+    hosts => ["{% for member in groups['elk'] %}{{ hostvars[member]['ansible_default_ipv4']['address'] }}:9200{% if not loop.last %}","{% endif %}{% endfor %}"]
+    index => "wso-%{[@metadata][version]}-%{+YYYY.MM.dd}"
+    user => "{{ elastic_user }}"
+    password => "{{ elastic_password }}"
+ }
+}
+
+
+

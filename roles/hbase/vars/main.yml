@@ -1,0 +1,4 @@
+---
+# vars file for hbase
+hbase_cluster: true
+

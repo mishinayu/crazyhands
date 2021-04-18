@@ -1,0 +1,27 @@
+# This is the default ansible 'hosts' file.
+#
+# It should live in /etc/ansible/hosts
+#
+#   - Comments begin with the '#' character
+#   - Blank lines are ignored
+#   - Groups of hosts are delimited by [header] elements
+#   - You can enter hostnames or ip addresses
+#   - A hostname/ip can be a member of multiple groups
+
+# Ex 1: Ungrouped hosts, specify before any group headers
+
+
+[k8s_master]
+10.15.139.140
+
+[k8s_node]
+10.15.139.141 
+10.15.139.142
+
+[kubernetes]
+10.15.139.140 kubernetes_cluster_master=true
+10.15.139.141
+10.15.139.142
+
+[balancer]
+10.15.139.139

@@ -1,0 +1,250 @@
+---
+# tasks file for wso2ei
+- name: "Create wso2 group"
+  group: 
+    name: "{{ wso2_group }}"
+    state: present
+  tags: wso2ei
+
+- name: "Add wso2 user"
+  user: 
+    name: "{{ wso2_user }}" 
+    shell: /bin/bash 
+    group: "{{ wso2_group }}"
+    state: present
+  tags: wso2ei
+
+- name: "Download wso2ei repo"
+  get_url:
+    url: https://bintray.com/wso2/rpm/rpm
+    dest: /etc/yum.repos.d/bintray-wso2-rpm.repo
+  tags: wso2ei
+
+- name: "Install the 6.5.0 version of WSO2EI"
+  yum:
+    name: wso2ei-6.5.0
+    state: present
+  tags: wso2ei
+
+- name: "Copy wso2ei-integrator service file"
+  template:
+    src: wso2ei-integrator.service.j2
+    dest: /etc/systemd/system/wso2ei-integrator.service
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version > '6'
+  tags: wso2ei
+
+- name: "Copy registry.xml file"
+  template:
+    src: "registry.xml.j2"
+    dest: "{{ ei_home }}/conf/registry.xml"
+    backup: yes
+    owner: "{{ wso2_user }}"
+    group: "{{ wso2_group }}"
+    mode: 0644
+  when: wso2ei_version == "6.5.0"
+  tags: wso2ei
+
+- name: "Copy master-datasources.xml file"
+  template:
+    src: "master-datasources.xml.j2"
+    dest: "{{ ei_home }}/conf/datasources/master-datasources.xml"
+    backup: yes
+    owner: "{{ wso2_user }}"
+    group: "{{ wso2_group }}"
+    mode: 0644
+  when: wso2ei_version == "6.5.0"
+  tags: wso2ei
+
+- name: "Copy user-mgt.xml file"
+  template:
+    src: "user-mgt.xml.j2"
+    dest: "{{ ei_home }}/conf/user-mgt.xml"
+    backup: yes
+    owner: "{{ wso2_user }}"
+    group: "{{ wso2_group }}"
+    mode: 0644
+  when: wso2ei_version == "6.5.0"
+  tags: wso2ei
+
+- name: "Copy axis2.xml file"
+  template:
+    src: "axis2.xml.j2"
+    dest: "{{ ei_home }}/conf/axis2/axis2.xml"
+    backup: yes
+    owner: "{{ wso2_user }}"
+    group: "{{ wso2_group }}"
+    mode: 0644
+  when: wso2ei_version == "6.5.0"
+  tags: wso2ei
+
+- name: "Copy carbon.xml file"
+  template:
+    src: "carbon.xml.j2"
+    dest: "{{ ei_home }}/conf/carbon.xml"
+    backup: yes
+    owner: "{{ wso2_user }}"
+    group: "{{ wso2_group }}"
+    mode: 0644
+  when: wso2ei_version == "6.5.0"
+  tags: wso2ei
+
+- name: "Create directory synapse-libs"
+  file:
+    path: "{{ ei_home }}/repository/deployment/server/synapse-libs"
+    state: directory
+    owner: "{{ wso2_user }}"
+    group: "{{ wso2_group }}"
+  tags: wso2ei
+
+- name: "Copy kafka connector kafkaTransport-connector-2.0.9.zip to targets"
+  copy:
+    src: "{{ role_path }}/files/kafkaTransport-connector-2.0.9.zip"
+    dest: "{{ ei_home }}/repository/deployment/server/synapse-libs/kafkaTransport-connector-2.0.9.zip"
+    owner: "{{ wso2_user }}"
+    group: "{{ wso2_group }}"
+    mode: 0755
+  tags: wso2ei
+
+- name: "Create directory conf/identity"
+  file:
+    path: "{{ ei_home }}/repository/conf/identity"
+    state: directory
+    owner: "{{ wso2_user }}"
+    group: "{{ wso2_group }}"
+  tags: wso2ei
+
+- name: "Copy jaas.conf to identity configuration dir"
+  copy:
+    src: "{{ role_path }}/files/jaas.conf"
+    dest: "{{ ei_home }}/repository/conf/identity/jaas.conf"
+    owner: "{{ wso2_user }}"
+    group: "{{ wso2_group }}"
+    mode: 0755
+  tags: wso2ei
+
+- name: "Create directory conf/etp-connection"
+  file:
+    path: "{{ ei_home }}/conf/etp-connection"
+    state: directory
+    owner: "{{ wso2_user }}"
+    group: "{{ wso2_group }}"
+  tags: wso2ei
+
+- name: "Copy .bindings to etp-connection configuration dir"
+  copy:
+    src: "{{ role_path }}/files/.bindings"
+    dest: "{{ ei_home }}/conf/etp-connection"
+    owner: "{{ wso2_user }}"
+    group: "{{ wso2_group }}"
+    mode: 0755
+  tags: wso2ei
+
+- name: "Copy {org.wso2.carbon.connector}kafkaTransport.xml file"
+  template:
+    src: "{org.wso2.carbon.connector}kafkaTransport.xml.j2"
+    dest: "{{ ei_home }}/repository/deployment/server/synapse-configs/default/imports/{org.wso2.carbon.connector}kafkaTransport.xml"
+    backup: yes
+    owner: "{{ wso2_user }}"
+    group: "{{ wso2_group }}"
+    mode: 0644
+  when: wso2ei_version == "6.5.0"
+  tags: wso2ei
+
+- name: "Copy ei.sh from master to wso2ei targets"
+  copy:
+    src: "{{ role_path }}/files/ei.sh"
+    dest: "{{ ei_home }}/bin/ei.sh"
+    owner: "{{ wso2_user }}"
+    group: "{{ wso2_group }}"
+    mode: 0755
+  tags: wso2ei
+
+- name: "Create directory wso2ei-integrator.service.d"
+  file:
+    path: "/etc/systemd/system/wso2ei-integrator.service.d"
+    state: directory
+  tags: wso2ei
+
+- name: "Copy list of environments"
+  template:
+    src: env.conf.j2
+    dest: /etc/systemd/system/wso2ei-integrator.service.d/env.conf
+  register: copy_env
+  tags: wso2ei
+
+- name: "Change file ownership, group and permissions"
+  file:
+    path: "{{ role_path }}/files/get-libs.sh"
+    owner: root
+    group: root
+    mode: '0755'
+  delegate_to: localhost
+  tags: wso2ei
+
+- name: "Download libs from Nexus"
+  shell: "{{ role_path }}/files/get-libs.sh"
+  delegate_to: localhost
+  run_once: true
+  tags: wso2ei
+
+- name: "Copy libs on targets"
+  copy:
+    src: "{{ item }}"
+    dest: "{{ ei_home }}/lib/"
+    owner: "{{ wso2_user }}"
+    group: "{{ wso2_group }}"
+  with_fileglob:
+  - /tmp/libs/*
+  tags: wso2ei
+
+- name: "Copy lib wmq-client-8.0.0.4.jar"
+  copy:
+    src: "{{ role_path }}/files/wmq-client-8.0.0.4.jar"
+    dest: "{{ ei_home }}/dropins"
+    owner: "{{ wso2_user }}"
+    group: "{{ wso2_group }}"
+    mode: 0755
+  tags: wso2ei
+
+- name: "Drop libs on bastion after copying to targets"
+  shell: "rm -rf /tmp/libs/*.*"
+  delegate_to: localhost
+  run_once: true
+  tags: wso2ei
+
+
+- name: "Copy server.crt from master to wso2ei targets"
+  copy:
+    src: /etc/ssl/certs/server.crt 
+    dest: /etc/ssl/certs/server.crt
+  tags: wso2ei
+
+- name: "Import SSL certificate server.crt to a given cacerts keystore"
+  java_cert:
+    cert_alias: server
+    cert_path: /etc/ssl/certs/server.crt
+    keystore_path: "{{ ei_home }}/repository/resources/security/client-truststore.jks"
+    keystore_pass: wso2carbon
+    state: present
+  tags: wso2ei
+  
+- name: "Start wso2ei-integrator as a service"
+  systemd:
+    name: wso2ei-integrator
+    state: restarted
+    enabled: yes
+    daemon_reload: yes
+  tags: wso2ei
+
+- name: "Clear log files"
+  cron:
+    name: "Clear logs in {{ ei_home }}"
+    user: "root"
+    minute: 0
+    hour: 23
+    job: "find {{ ei_home }}/repository/logs -mtime +1 -exec rm {} \\;" 
+    state: present
+  tags: wso2ei
+
+...
+

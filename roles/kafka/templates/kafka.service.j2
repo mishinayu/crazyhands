@@ -1,0 +1,17 @@
+[Unit]
+Description=Kafka
+After=network.target
+After=systemd-user-sessions.service
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/bin/sh -c '{{ kafka_dir }}/bin/kafka-server-start.sh {{ kafka_dir }}/config/server.properties > {{ kafka_dir }}/logs/kafka.log 2>&1'
+ExecStop={{ kafka_dir }}/bin/kafka-server-stop.sh
+Restart=on-abnormal
+User={{ kafka_user }}
+Group={{ kafka_group }}
+
+[Install]
+WantedBy=multi-user.target
+

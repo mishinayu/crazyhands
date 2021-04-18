@@ -1,0 +1,9 @@
+---
+# defaults file for zookeper
+zookeeper_user: zookeeper
+zookeeper_group: zookeeper
+zookeeper_uhome: /home/zookeeper
+zooversion: 3.5.7
+zoodata: /data/zookeeper/data
+zoohome: /etc/zookeeper/apache-zookeeper-{{ zooversion }}-bin
+admin_server_port: 8090

@@ -1,0 +1,13 @@
+---
+#Check access by ports
+- name: "Check access"
+  hosts: all
+  tasks:
+    - name: "Access"
+      wait_for:
+        host: 10.206.171.129 
+        port: 5044
+        delay: 5
+        state: started
+        timeout: 30
+

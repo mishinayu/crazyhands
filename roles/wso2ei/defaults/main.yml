@@ -1,0 +1,18 @@
+---
+# defaults file for wso2ei
+wso2ei_version: 6.5.0
+wso2_user: wso2
+wso2_group: wso2
+wso2ei_database_user: wso2
+wso2ei_database_pass: wso2carbon
+jdbc_file: postgresql-42.2.12.jar
+jdbc_url_path: https://jdbc.postgresql.org/download/{{ jdbc_file }}
+carbon_file: cap_asurp_prod_1.0.0.zip
+nexus_url_path: http://10.15.75.132:8081/repository/dist-supeip/cap_asupr/{{ carbon_file }}
+ei_home: /usr/lib64/wso2/wso2ei/{{ wso2ei_version }}
+registry_local_id: "{{ groups['wso2ei'].index(inventory_hostname)+1 }}"
+kafka_transport: kafkaTransport
+jms_username: hunter
+jms_password: hunter
+jms_repository: file:/usr/lib64/wso2/wso2ei/6.5.0/conf/etp-connection/
+jms_jndiname: hunters.etp.connectionFactory

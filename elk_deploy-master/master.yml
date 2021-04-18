@@ -1,0 +1,52 @@
+---
+# file master.yml
+- name: "Setup MON project"
+  hosts: all
+  tasks:
+    - name: "Display hostnames of MON"
+      debug:
+        msg: "The hostname is {{ ansible_hostname }} and the OS is {{ ansible_os_family }}"
+
+    - name: "Run common role"
+      import_role:
+        name: common
+
+- name: "Setup Apps tier | ELK"
+  hosts: elk
+  tasks:
+    - name: "Display elasticsearch hostnames of MON"
+      debug:
+        msg: "The hostname is {{ ansible_hostname }} and the OS is {{ ansible_os_family }}"
+
+    - name: "Run elastic role"
+      import_role:
+        name: elastic
+
+    - name: "Run kibana role"
+      import_role:
+        name: kibana
+
+    - name: "Run logstash role"
+      import_role:
+        name: logstash
+
+    - name: "Run agent role"
+      import_role:
+        name: agents
+
+    - name: "Run curator role"
+      import_role:
+        name: curator
+
+- name: "Setup FrontEnd  Tier | Nginx"
+  hosts: balancer
+  tasks:
+    - name: "Show  balancer hosts"
+      debug:
+        msg: "The balancer host's is {{ ansible_hostname }}"
+
+    - name: "Run nginx role"
+      import_role:
+        name: nginx
+
+

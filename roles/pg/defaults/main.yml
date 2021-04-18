@@ -1,0 +1,12 @@
+---
+# defaults file for pg
+pguser: postgres
+pggroup: postgres
+pgdata: "/data"
+pgcluster_reset: false
+pgsql_cluster: false
+pgbin: "/usr/pgsql-11/bin"
+
+
+
+

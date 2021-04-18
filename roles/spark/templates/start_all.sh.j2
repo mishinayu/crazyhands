@@ -1,0 +1,24 @@
+HADOOP_USER_NAME={{ hadoop_user }}
+
+PATH=$PATH:$HOME/.local/bin:$HOME/bin:{{ hadoop_home }}/bin/
+
+export PATH
+export HADOOP_USER_NAME
+
+{{ spark_bin }}/spark-submit \
+--class ru.dit.oko.init.initStreams \
+--master spark://{{ spark_master_host }}:7077 \
+--deploy-mode cluster \
+--executor-memory 4G \
+--driver-memory 4G \
+--total-executor-cores 8 \
+--conf "spark.sql.autoBroadcastJoinThreshold=-1" \
+--conf "spark.driver.cores=4" \
+--conf "spark.driver.extraJavaOptions=-Duser.timezone=UTC" \
+--conf "spark.executor.extraJavaOptions=-Duser.timezone=UTC" \
+--conf "spark.executorEnv.OKO_APP_PROFILE=test" \
+hdfs://{{ spark_master_host }}:9000/jar/04-oko_2.11-0.2.jar \
+hdfs://{{ spark_master_host }}:9000 \
+jdbc:phoenix:{% for member in groups['zoo'] %}{{ hostvars[member]['ansible_default_ipv4']['address'] }}{% if not loop.last %}","{% endif %}{% endfor %}:2181 {% for member in groups['spark'] %}{{ hostvars[member]['ansible_default_ipv4']['address'] }}:9092{% if not loop.last %}","{% endif %}{% endfor %} \
+
+

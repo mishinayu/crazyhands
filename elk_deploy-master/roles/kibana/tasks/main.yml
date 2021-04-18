@@ -1,0 +1,35 @@
+---
+# tasks file for kibana
+- name: "Enable kibana repo"
+  template:
+    src: kibana.repo.j2
+    dest: /etc/yum.repos.d/kibana.repo
+    owner: root
+    group: root
+    mode: 0644
+  when: kibana_yum_repo_enabled
+  tags: kibana
+
+- name: "Ensure a list of kibana related packages are installed"
+  yum:
+    name: "{{ packages }}"
+  vars:
+     packages:
+     - kibana-{{ kibana_version }}
+     state: present
+  tags: kibana
+
+- name: "Copy template kibana.yml.j2"
+  template:
+    src: "kibana.yml.j2"
+    dest: "{{ kibana_home }}/kibana.yml"
+    mode: 0644
+  tags: kibana
+
+- name: "Enable and start Kibana"
+  systemd:
+    name: kibana
+    state: restarted
+    enabled: yes
+    daemon_reload: yes
+  tags: kibana,restart

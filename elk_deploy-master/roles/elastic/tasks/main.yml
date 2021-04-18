@@ -1,0 +1,69 @@
+---
+# tasks file for elastic
+- name: "Enable elasticsearch repo"
+  template:
+    src: elasticsearch.repo.j2
+    dest: /etc/yum.repos.d/elasticsearch.repo
+    owner: root
+    group: root
+    mode: 0644
+  when: elastic_yum_repo_enabled
+  tags: elastic
+
+- name: "Ensure a list of elasticsearch related packages are installed"
+  yum:
+    name: "{{ packages }}"
+  vars:
+     packages:
+     - elasticsearch-{{ elastic_version }}
+     state: present
+  tags: elastic
+
+- name: "Create PKCS#12 cert for the ELK cluster node and put it into this role's files directory"
+  shell: /usr/share/elasticsearch/bin/elasticsearch-certutil cert --pass "" --out {{ role_path }}/files/elastic-stack-ca.p12
+  args:
+    creates: "{{ role_path }}/files/elastic-stack-ca.p12"
+  delegate_to: localhost
+  run_once: true
+  tags: elastic
+
+- name: "Make sure cert directory for ELK Nodes"
+  file:
+    path: "{{ elastic_home }}/config/cert/"
+    state: directory
+    mode: 0700
+    owner: "{{ elastic_user }}"
+    group: "{{ elastic_group }}"
+  tags: elastic
+
+- name: "Copy CA file to ELK Nodes"
+  copy:
+    src: elastic-stack-ca.p12
+    dest: "{{ elastic_home }}/config/cert/elastic-stack-ca.p12"
+    mode: 0666
+    owner: "{{ elastic_user }}"
+    group: "{{ elastic_group }}"
+  tags: elastic
+
+- name: "Copy template elasticsearch.yml.j2"
+  template:
+    src: "elasticsearch.yml.j2"
+    dest: "{{ elastic_home }}/elasticsearch.yml"
+    mode: 0644
+  tags: elastic
+
+- name: "Copy template jvm.options.j2"
+  template:
+    src: "jvm.options.j2"
+    dest: "{{ elastic_home }}/jvm.options"
+    mode: 0644
+  tags: elastic
+
+- name: "Enable and start elasticsearch"
+  systemd:
+    name: elasticsearch
+    state: restarted
+    enabled: yes
+    daemon_reload: yes
+  tags: elastic,restart
+

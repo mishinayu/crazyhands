@@ -1,0 +1,56 @@
+---
+- name: "Docker | Add Docker repo"
+  get_url:
+    url: https://download.docker.com/linux/centos/docker-ce.repo
+    dest: /etc/yum.repos.d/docker-ce.repo
+    force: yes
+  ignore_errors: yes
+  tags: common
+
+#- name: "Fix docker path"
+#  command: yum-config-manager --setopt="docker-ce-stable.baseurl=https://download.docker.com/linux/centos/7/x86_64/stable" --save
+#  tags: common
+
+- name: "Fix docker-ce-stable basepath"
+  yum_repository:
+    name: docker-ce-stable
+    baseurl: https://download.docker.com/linux/centos/7/x86_64/stable
+    gpgkey: https://download.docker.com/linux/centos/gpg
+    gpgcheck: yes
+    description: docker-ce-stable
+    state: present
+  tags: common
+
+#- name: "Docker | Enable Docker CE repo"
+#  ini_file:
+#    dest: /etc/yum.repos.d/docker-ce.repo
+#    section: 'docker-ce-edge'
+#    option: enabled
+#    value: 1
+#  tags: common
+
+- name: "Docker | Install Docker packages"
+  package:
+    name: docker-ce
+    state: latest
+  tags: common
+
+- name: "Docker | Create /etc/docker catalog"
+  file:
+    path: /etc/docker
+    state: directory
+    mode: 0755
+  tags: common
+
+#- name: "Add Private Nexus Docker Registry file to use by root"
+#  copy:
+#    src: "{{ role_path }}/files/daemon.json"
+#    dest: "/etc/docker/daemon.json"
+#    mode: 0644
+#    owner: "root"
+#    group: "root"
+#  tags: common
+
+
+...
+

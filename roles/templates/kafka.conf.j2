@@ -1,0 +1,10 @@
+stream {
+  upstream {{ upstream_kafka }} {
+    server {{ upstream_ip }}:{{ upstream_port }};
+  }
+  server {
+    listen *:80;
+    proxy_pass {{ upstream_kafka }};
+  }
+}
+

@@ -1,0 +1,76 @@
+<datasources-configuration xmlns:svns="http://org.wso2.securevault/configuration">
+  
+    <providers>
+        <provider>org.wso2.carbon.ndatasource.rdbms.RDBMSDataSourceReader</provider>
+    </providers>
+  
+    <datasources>
+      
+        <datasource>
+            <name>REGISTRY_LOCAL{{ registry_local_id }}</name>
+            <description>The datasource used for registry local</description>
+            <jndiConfig>
+                <name>jdbc/WSO2CarbonDB</name>
+            </jndiConfig>
+            <definition type="RDBMS">
+                <configuration>
+                    <url>jdbc:postgresql://{{ db_node }}:5432/registry_local{{ registry_local_id }}?autoReconnect=true</url>
+                    <username>{{ wso2ei_database_user }}</username>
+                    <password>{{ wso2ei_database_pass }}</password>
+                    <driverClassName>org.postgresql.Driver</driverClassName>
+                    <maxActive>50</maxActive>
+                    <maxWait>60000</maxWait>
+                    <testOnBorrow>true</testOnBorrow>
+                    <validationQuery>SELECT 1</validationQuery>
+                    <validationInterval>30000</validationInterval>
+                    <defaultAutoCommit>true</defaultAutoCommit>
+                </configuration>
+            </definition>
+        </datasource>
+        <datasource>
+            <name>REGISTRY_DB</name>
+            <description>The datasource used for registry config</description>
+            <jndiConfig>
+                <name>jdbc/WSO2CarbonDB</name>
+            </jndiConfig>
+            <definition type="RDBMS">
+                <configuration>
+                    <url>jdbc:postgresql://{{ db_node }}:5432/registry_db?autoReconnect=true</url>
+                    <username>{{ wso2ei_database_user }}</username>
+                    <password>{{ wso2ei_database_pass }}</password>
+                    <driverClassName>org.postgresql.Driver</driverClassName>
+                    <maxActive>50</maxActive>
+                    <maxWait>60000</maxWait>
+                    <testOnBorrow>true</testOnBorrow>
+                    <validationQuery>SELECT 1</validationQuery>
+                    <validationInterval>30000</validationInterval>
+                    <defaultAutoCommit>true</defaultAutoCommit>
+                </configuration>
+            </definition>
+        </datasource>
+        <datasource>
+            <name>WSO2_USER_DB</name>
+            <description>The datasource used for registry and user manager</description>
+            <jndiConfig>
+                <name>jdbc/WSO2UMDB</name>
+            </jndiConfig>
+            <definition type="RDBMS">
+                <configuration>
+                    <url>jdbc:postgresql://{{ db_node }}:5432/wso2_user_db?autoReconnect=true</url>
+                    <username>{{ wso2ei_database_user }}</username>
+                    <password>{{ wso2ei_database_pass }}</password>
+                    <driverClassName>org.postgresql.Driver</driverClassName>
+                    <maxActive>50</maxActive>
+                    <maxWait>60000</maxWait>
+                    <testOnBorrow>true</testOnBorrow>
+                    <validationQuery>SELECT 1</validationQuery>
+                    <validationInterval>30000</validationInterval>
+                    <defaultAutoCommit>true</defaultAutoCommit>
+                </configuration>
+            </definition>
+        </datasource>
+
+    </datasources>
+
+</datasources-configuration>
+

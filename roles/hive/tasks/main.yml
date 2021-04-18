@@ -1,0 +1,220 @@
+---
+# tasks file for hive
+- name: Create hive group
+  group:
+    name: "{{ hive_group }}"
+    state: present
+  tags: hive
+
+- name: Create hive User
+  user:
+    name: "{{ hive_user }}"
+    group: "{{ hive_group }}"
+    create_home: yes
+    shell: /bin/bash
+  tags: hive
+
+- name: "Download hive version {{ hive_version }}"
+  get_url:
+    url: "{{ hive_download_url }}"
+    dest: "/tmp/apache-hive-{{ hive_version }}.tar.gz"
+    owner: "{{ hive_user }}"
+    group: "{{ hive_group }}"
+  tags: hive
+
+- name: "Create /etc/hive directory"
+  file:
+    path: /etc/hive
+    state: directory
+    owner: "{{ hive_user }}"
+    group: "{{ hive_group }}"
+    mode: 0755
+  tags: hive
+
+- name: "Check if hive archive is already unpacked"
+  find: 
+    paths: "{{ hive_home }}"
+    file_type: file
+    patterns: "start*.sh"
+    recurse: yes
+  register: filesfound
+  become: true
+  become_user: "{{ hive_user }}"
+  tags: hive
+ 
+- name: "Debug var filesfound"
+  debug:
+    var: filesfound.matched 
+  tags: hive
+  
+- name: Extract hive archive
+  unarchive:
+    src: "/tmp/apache-hive-{{ hive_version }}.tar.gz"
+    dest: /etc/hive
+    owner: "{{ hive_user }}"
+    group: "{{ hive_group }}"
+    remote_src: yes
+  become: true
+  become_user: "{{ hive_user }}"
+  when:
+  - filesfound.matched|int == 0
+  tags: hive
+
+- name: Install postgresql-jdbc
+  yum: 
+    name: postgresql-jdbc
+    state: present
+  tags: hive
+
+- name: Change file ownership, group and permissions
+  file:
+    path: "/usr/share/java/postgresql-jdbc.jar"
+    owner: "{{ hive_user }}"
+    group: "{{ hive_group }}"
+    mode: '0755'
+  tags: hive
+
+- name: Create link on postgresql-jdbc.jar
+  file:
+    src: "/usr/share/java/postgresql-jdbc.jar"
+    dest: "{{ hive_home }}/lib/postgresql-jdbc.jar"
+    state: link
+    owner: "{{ hive_user }}"
+    group: "{{ hive_group }}"
+  become: true
+  become_user: "{{ hive_user }}"
+  tags: hive
+
+- name: "Add hive environment variables to .bash_profile"
+  blockinfile:
+    path: "{{ hive_uhome}}/.bash_profile"
+    create: yes
+    owner: "{{ hive_user }}"
+    group: "{{ hive_group }}"
+    mode: 0400
+    block: |
+      export HADOOP_HOME={{ hadoop_home }}
+      export HBASE_HOME={{ hbase_home }}
+      export PHOENIX_HOME={{ phoenix_home }}
+      export HIVE_HOME={{ hive_home }}
+      export HIVE_CONF_DIR={{ hive_home }}/conf
+      export PATH=$PATH:{{ hive_home }}/bin:{{ hadoop_home }}/bin:{{ hadoop_home }}/sbin:{{ hbase_home }}/bin:{{ phoenix_home }}/bin
+    state: present
+  tags: hive
+
+- name: "Create hdfs directory for hive"
+  shell: |
+    {{ hadoop_home }}/bin/hdfs dfs -mkdir -p /data/hive/warehouse 
+    {{ hadoop_home }}/bin/hdfs dfs -chmod -R 775 /data/hive
+    {{ hadoop_home }}/bin/hdfs dfs -chmod -R ug+rw  /data/hive/scratch
+    {{ hadoop_home }}/bin/hdfs dfs -chown -R {{ hive_user }}:{{ hive_group }} /data
+    {{ hadoop_home }}/bin/hdfs dfs -chmod -R ugo+rw /data
+  args:
+    chdir: "{{ hadoop_home }}/bin"
+    executable: /bin/bash
+  register: register_hdfs
+  become: true
+  become_user: "{{ hive_user }}"
+  ignore_errors: true
+  when: "ansible_hostname == (hive_master_hostname)"
+  tags: hive2
+
+- name: "Debug hdfs commadns"
+  debug:
+    var: register_hdfs
+  tags: hive  
+
+- name: Add the service scripts
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: "{{ hive_user}}"
+    group: "{{ hive_group }}"
+  with_items:
+  - {src: "hive-env.sh.j2", dest: "{{ hive_home }}/conf/hive-env.sh"}
+  - {src: "hive-site.xml.j2", dest: "{{ hive_home }}/conf/hive-site.xml"}
+  - {src: "hive-default.xml.j2", dest: "{{ hive_home }}/conf/hive-default.xml"}
+  tags: hive
+
+- name: "Check if database metastore is exist and has the data"
+  shell: "{{ hive_home }}/bin/schematool -dbType postgres -validate"
+  become: true
+  become_user: "{{ hive_user }}"
+  args:
+    chdir: "{{ hive_home }}/bin"
+  register: register_validate
+  ignore_errors: true
+  when: "ansible_hostname == (hive_master_hostname)"
+  environment:
+    HADOOP_HOME: "{{ hadoop_home }}"
+  tags: hive
+
+- name: "Debug validate"
+  debug:
+    var: register_validate
+  tags: hive  
+
+- name: "Create initial database metastore structure "
+  shell: "{{ hive_home }}/bin/schematool -dbType postgres -initSchema"
+  become: true
+  become_user: "{{ hive_user }}"
+  args:
+    chdir: "{{ hive_home }}/bin"
+  register: register_result
+  ignore_errors: true
+  when: "ansible_hostname == (hive_master_hostname) and 'ERROR: relation' in register_validate.stderr"
+  environment:
+    HADOOP_HOME: "{{ hadoop_home }}"
+  tags: hive
+
+- name: "Debug initSchema register"
+  debug:
+    var: register_result
+  tags: hive
+
+- name: "Copy template hiveserver2.j2"
+  template:
+    src: "hiveserver2.j2"
+    dest: /etc/systemd/system/hive.service
+  tags: hive
+
+- name: "Copy template start-hive.sh.j2"
+  template:
+    src: "start-hive.sh.j2"
+    dest: "{{ hive_home }}/bin/start-hive.sh"
+    owner: "{{ hive_user }}"
+    group: "{{ hive_group }}"
+    mode: 0755
+  tags: hive
+
+- name: "Copy template metastore.j2"
+  template:
+    src: "metastore.j2"
+    dest: /etc/systemd/system/metastore.service
+  tags: hive
+
+- name: "Copy template start-metastore.sh.j2"
+  template:
+    src: "start-metastore.sh.j2"
+    dest: "{{ hive_home }}/bin/start-metastore.sh"
+    owner: "{{ hive_user }}"
+    group: "{{ hive_group }}"
+    mode: 0755
+  tags: hive
+
+- name: "Enable and start hiveserver"
+  systemd:
+    name: hive
+    state: restarted
+    enabled: yes
+    daemon_reload: yes
+  tags: hive
+
+- name: "Enable and start metastore"
+  systemd:
+    name: metastore
+    state: restarted
+    enabled: yes
+    daemon_reload: yes
+  tags: hive
+

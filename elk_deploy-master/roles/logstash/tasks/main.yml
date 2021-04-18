@@ -1,0 +1,71 @@
+---
+# tasks file for logstash
+- name: "Enable logstash repo"
+  template:
+    src: logstash.repo.j2
+    dest: /etc/yum.repos.d/logstash.repo
+    owner: root
+    group: root
+    mode: 0644
+  when: logstash_yum_repo_enabled
+  tags: logstash
+
+- name: "Ensure a list of logstash related packages are installed"
+  yum:
+    name: "{{ packages }}"
+  vars:
+     packages:
+     - logstash-{{ logstash_version }}
+     state: present
+  tags: logstash
+
+- name: "Copy input.conf.j2"
+  template:
+    src: "input.conf.j2"
+    dest: "{{ logstash_home }}/conf.d/input.conf"
+    mode: 0644
+  tags: logstash
+
+- name: "Copy logstash.conf.j2 to targets"
+  template:
+    src: "logstash.conf.j2"
+    dest: "{{ logstash_home }}/conf.d/logstash.conf"
+    mode: 0644
+  tags: logstash
+
+- name: "Copy syslog-filter.conf.j2 to targets"
+  template:
+    src: "syslog-filter.conf.j2"
+    dest: "{{ logstash_home }}/conf.d/syslog-filter.conf"
+    mode: 0644
+  tags: logstash
+
+- name: "Copy wso2ei-integrator-filter.conf.j2 to targets"
+  copy:
+    src: "{{ role_path }}/files/wso2ei-integrator-filter.conf.j2"
+    dest: "{{ logstash_home }}/conf.d/wso2ei-integrator-filter.conf"
+    mode: 0644
+  tags: logstash
+
+- name: "Copy template logstash.yml.j2"
+  template:
+    src: "logstash.yml.j2"
+    dest: "{{ logstash_home }}/logstash.yml"
+    mode: 0644
+  tags: logstash
+
+- name: "Copy template jvm.options.j2"
+  template:
+    src: "jvm.options.j2"
+    dest: "{{ logstash_home }}/jvm.options"
+    mode: 0644
+  tags: logstash
+
+- name: "Enable and start Logstash"
+  systemd:
+    name: logstash
+    state: restarted
+    enabled: yes
+    daemon_reload: yes
+  tags: logstash,restart
+

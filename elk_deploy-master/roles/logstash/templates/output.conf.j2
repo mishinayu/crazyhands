@@ -1,0 +1,14 @@
+output {
+    if [@metadata][pipeline] {
+        elasticsearch {
+             hosts => ["{% for member in groups['elk'] %}{{ hostvars[member]['ansible_default_ipv4']['address'] }}:9200{% if not loop.last %}","{% endif %}{% endfor %}"]
+            manage_template => false
+            # pipeline => "%{[@metadata][pipeline]}"
+            index => "metricbeat-system-7.6.2"
+            user => "${ES_USER}"
+            password => "${ES_PWD}"
+        }
+    }
+    # stdout { codec => rubydebug }
+}
+

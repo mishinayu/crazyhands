@@ -1,0 +1,20 @@
+# Module: kafka
+# Docs: https://www.elastic.co/guide/en/beats/filebeat/7.10/filebeat-module-kafka.html
+
+- module: kafka
+  # All logs
+  log:
+    enabled: true
+
+    # Set custom paths for Kafka. If left empty,
+    # Filebeat will look under /opt.
+    var.kafka_home: /etc/kafka_2.12-2.3.0/
+
+    # Set custom paths for the log files. If left empty,
+    # Filebeat will choose the paths depending on your OS.
+    var.paths:
+      - "/etc/kafka/logs/controller.log*"
+      - "/etc/kafka/logs/server.log*"
+      - "/etc/kafka/logs/state-change.log*"
+      - "/etc/kafka/logs/kafka*.log*"
+

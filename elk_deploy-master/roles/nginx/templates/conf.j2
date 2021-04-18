@@ -1,0 +1,48 @@
+upstream {{ item.name }}  {
+    server {{ item.server1 }}:{{ item.port }};
+{% if item.server2 is defined %}    server {{ item.server2 }}:{{ item.port }};
+{% endif %}
+{% if item.server3 is defined %}    server {{ item.server3 }}:{{ item.port }};
+    ip_hash;
+{% endif %}
+}
+
+server {
+    listen 80;
+    server_name {{ item.name }};
+    if ($blacklisted_ips = 1) {
+        set $notallowed IP;
+    }
+
+    if ($request_uri ~ /) {
+        set $notallowed "${notallowed}LOC";
+    }
+
+    if ($request_uri ~ /.well-known) {
+        set $notallowed IP;
+    }
+
+    if ($notallowed = IPLOC) {
+        return 403;
+    }
+
+
+    location / {
+                real_ip_header X-Real-IP;
+                proxy_set_header X-Forwarded-Host $host;
+                proxy_set_header X-Forwarded-Server $host;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header Host $http_host;
+                proxy_read_timeout 5m;
+                proxy_send_timeout 5m;
+                set_real_ip_from 10.15.129.0/25;
+                set_real_ip_from 10.15.240.0/22;
+                proxy_pass http://{{ item.name }};
+                proxy_http_version 1.1;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection "upgrade";
+        }
+    error_log  /var/log/nginx/{{ item.name}}-error.log warn;
+    access_log  /var/log/nginx/{{ item.name }}-access.log main;
+}
+

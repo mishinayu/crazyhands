@@ -1,0 +1,16 @@
+[Unit]
+Description=Zookeper service
+Requires=network.target remote-fs.target
+After=network.target remote-fs.target
+
+[Service]
+Type=simple
+ExecStart={{ kafka_dir }}/bin/zookeeper-server-start.sh {{ kafka_dir}}/config/zookeeper.properties
+ExecStop={{ kafka_dir }}/bin/zookeeper-server-stop.sh
+User={{ kafka_user }}
+Group={{ kafka_group }}
+Restart=on-abnormal
+
+[Install]
+WantedBy=multi-user.target
+

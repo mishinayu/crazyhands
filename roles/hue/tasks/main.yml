@@ -1,0 +1,40 @@
+---
+# tasks file for hue
+- name: Check if docker in running state
+  systemd:
+    name: docker
+    state: started
+  tags: hue
+
+- name: Install the pip package, force upgrade"
+  pip:
+    name: pip
+    executable: pip
+    state: present
+    version: 20.3.4
+  tags: hue
+
+- name: Install Docker Module for Python
+  pip:
+    name: docker
+    state: present
+  tags: hue
+
+- name: Add hue.ini config to /root folder
+  template:
+    src: "hue.ini.j2"
+    dest: /root/hue.ini
+    mode: 0644
+  tags: hue
+
+- name: Run hue container
+  community.docker.docker_container:
+    name: hue
+    image: gethue/hue
+    state: started
+    recreate: yes
+    ports:
+      - "8888:8888"
+    volumes:
+      - /root/hue.ini:/usr/share/hue/desktop/conf/z-hue.ini
+  tags: hue

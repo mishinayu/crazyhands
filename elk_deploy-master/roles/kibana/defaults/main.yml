@@ -1,0 +1,8 @@
+---
+# defaults file for kibana
+kibana_yum_repo_enabled: true
+kibana_version: 7.10.0
+kibana_home: /etc/kibana
+kibana_port: 5601
+elk_cluster_name: elk.kgh.cluster
+elastic_http_port: 9200

@@ -1,0 +1,13 @@
+---
+# defaults file for logstash
+logstash_yum_repo_enabled: true
+logstash_version: 7.10.0
+logstash_home: /etc/logstash
+logstash_port: 5601
+elk_cluster_name: elk.kgh.cluster
+elastic_path_data: /var/lib/elasticsearch
+elastic_path_logs: /var/log/elasticsearch
+elastic_http_port: 9200
+jvm_memory_xms: -Xms2g
+jvm_memory_xmx: -Xmx2g
+

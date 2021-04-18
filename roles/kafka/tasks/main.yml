@@ -1,0 +1,90 @@
+---
+# tasks file for kafka
+- name: Create kafka group
+  group:
+    name: "{{ kafka_group }}"
+    state: present
+  tags: kaf
+
+- name: Add the kafka user
+  user:
+    name: "{{ kafka_user }}"
+    shell: /bin/bash
+    groups: "{{ kafka_group }}"
+    append: yes
+  tags: kaf
+
+- name: Check if Kafka has already been downloaded and unpacked
+  stat:
+    path: "{{ kafka_dir }}_{{ kafka_scala_version }}-{{ kafka_version }}"
+  register: dir
+  tags: kaf
+
+- name: Download Apache Kafka
+  get_url:
+    url: http://www-eu.apache.org/dist/kafka/{{ kafka_version }}/kafka_{{ kafka_scala_version }}-{{ kafka_version }}.tgz
+    dest: /tmp
+  when: not dir.stat.exists
+  tags: kaf
+
+- name: Unpack Apache Kafka
+  unarchive:
+    src: /tmp/kafka_{{ kafka_scala_version }}-{{ kafka_version }}.tgz
+    dest: "{{ kafka_root_dir }}"
+    copy: no
+    group: "{{ kafka_group }}"
+    owner: "{{ kafka_user }}"
+  when: not dir.stat.exists
+  tags: kaf
+
+- name: Create symlink to kafka installation directory
+  file:
+    src: "{{ kafka_root_dir }}/kafka_{{ kafka_scala_version }}-{{ kafka_version }}"
+    dest: "{{ kafka_dir }}"
+    state: link
+    group: "{{ kafka_group }}"
+    owner: "{{ kafka_user }}"
+  tags: kaf
+
+- name: Create directory for kafka log files
+  file:
+    path: "{{ kafka_log_dirs }}"
+    state: directory
+    group: "{{ kafka_group }}"
+    owner: "{{ kafka_user }}"
+  tags: kaf
+
+- name: Config template for Kafka  server.properties
+  template:
+    src: server.properties.j2
+    dest: '{{ kafka_dir }}/config/server.properties'
+  tags: kaf
+
+- name: Config template for Zoo zookeeper.properties
+  template:
+    src: zookeeper.properties.j2
+    dest: '{{ kafka_dir }}/config/zookeeper.properties'
+  tags: kaf
+
+- name: Template kafka systemd 
+  template:
+    src: kafka.service.j2
+    dest: /usr/lib/systemd/system/kafka.service
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version > '6'
+  tags: kaf
+
+- name: Install and start the kafka service
+  systemd:
+    name: kafka
+    state: restarted
+    enabled: yes
+    daemon_reload: yes
+  tags: kaf
+
+- name: Delete the kafka archive file
+  file:
+    path: /tmp/kafka_{{ kafka_scala_version }}-{{ kafka_version }}.tgz
+    state: absent
+  tags: kaf
+...
+

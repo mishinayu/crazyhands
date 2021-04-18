@@ -1,0 +1,11 @@
+---
+# defaults file for wso2mi
+wso2mi_version: 1.1.0
+mi_home: /usr/lib64/wso2mi/{{ wso2mi_version }}
+mi_download_url: https://maven.wso2.org/nexus/content/repositories/public/org/wso2/ei/wso2mi/{{ wso2mi_version }}/wso2mi-{{ wso2mi_version }}.zip
+wso2mi_file: wso2mi-1.1.0.zip
+wso2mi_dash_version: 1.1.0
+mi_dash_home: /usr/lib64/wso2mi_dash/{{ wso2mi_dash_version}}
+mi_dash_download_url: https://repo1.maven.org/maven2/org/wso2/ei/monitoring-dashboard-distribution/{{ wso2mi_dash_version }}/monitoring-dashboard-distribution-{{ wso2mi_dash_version }}.zip
+wso2mi_dash_file: monitoring-dashboard-distribution-1.1.0.zip 
+

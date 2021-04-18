@@ -1,0 +1,103 @@
+---
+# tasks file for cassandra
+- name: "Remove swapfile from /etc/fstab"
+  mount:
+    name: swap
+    fstype: swap
+    state: absent
+  tags: cas
+
+- name: "Disable swap"
+  command: swapoff -a
+  when: ansible_swaptotal_mb > 0
+  tags: cas
+
+- name: "Create cassandra Group"
+  group:
+    name: "{{ cassandra_group }}"
+    state: present
+  tags: cas
+
+- name: "Create cassandra User"
+  user:
+    name: "{{ cassandra_user }}"
+    comment: "cassandra administrator"
+    group: "{{ cassandra_group }}"
+    create_home: yes 
+    shell: /bin/bash
+  tags: cas
+
+- name: "Create SSH keys for the cassandra user and put it into this role's files directory"
+  shell: ssh-keygen -f "{{role_path}}/files/cassandra_user_id_rsa" -t rsa -N ''
+  args:
+    creates: "{{ role_path }}/files/cassandra_user_id_rsa"
+  delegate_to: localhost
+  run_once: true
+  tags: cas
+
+- name: "Make sure SSH directory for cassandra user exists"
+  file:
+    path: "{{ cassandra_uhome }}/.ssh"
+    state: directory
+    mode: 0700
+    owner: "{{ cassandra_user }}"
+    group: "{{ cassandra_group }}"
+  tags: cas
+
+- name: "Copy private SSH key for cassandra user"
+  copy:
+    src: cassandra_user_id_rsa
+    dest: "{{ cassandra_uhome }}/.ssh/id_rsa"
+    mode: 0600
+    owner: "{{ cassandra_user }}"
+    group: "{{ cassandra_group }}"
+  tags: cas
+
+- name: "Copy public SSH key for cassandra user"
+  copy:
+    src: cassandra_user_id_rsa.pub
+    dest: "{{ cassandra_uhome }}/.ssh/id_rsa.pub"
+    mode: 0644
+    owner: "{{ cassandra_user }}"
+    group: "{{ cassandra_group }}"
+  tags: cas
+
+- name: "Cross authorize this key among all cassandra servers"
+  lineinfile:
+    path: "{{ cassandra_uhome }}/.ssh/authorized_keys"
+    create: yes
+    mode: 0600
+    owner: "{{ cassandra_user }}"
+    group: "{{ cassandra_group }}"
+    line: "{{ lookup('file', 'cassandra_user_id_rsa.pub') }}"
+    state: present
+  tags: cas
+
+- name: Enable cassandra repo.
+  template:
+    src: cassandra.repo.j2
+    dest: /etc/yum.repos.d/cassandra.repo
+    owner: root
+    group: root
+    mode: 0644
+  when: cassandra_yum_repo_enabled
+  tags: cas
+
+- name: "Install cassandra"
+  yum:
+    name: cassandra
+    state: present
+  tags: cas
+
+- name: Config template for cassandra  cassandra.yaml
+  template:
+    src: cassandra.yaml.j2
+    dest: '{{ cassandra_home }}/conf/cassandra.yaml'
+  tags: cas
+
+- name: "Enable and start cassandra"
+  systemd:
+    name: cassandra
+    state: started
+    enabled: yes
+  tags: cas

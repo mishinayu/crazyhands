@@ -1,0 +1,11 @@
+---
+# defaults file for spark
+spark_uhome: /home/spark
+spark_user: spark
+spark_group: spark
+spark_version: 2.4.6
+spark_hadoop_ver: hadoop2.7
+spark_download_url: https://archive.apache.org/dist/spark/spark-{{ spark_version }}/spark-{{ spark_version }}-bin-{{ spark_hadoop_ver }}.tgz
+spark_home: /etc/spark/spark-{{ spark_version }}-bin-{{ spark_hadoop_ver }}
+spark_bin: "{{ spark_home }}/bin"
+

@@ -1,0 +1,32 @@
+# Module: elasticsearch
+# Docs: https://www.elastic.co/guide/en/beats/metricbeat/7.10/metricbeat-module-elasticsearch.html
+
+- module: elasticsearch
+  metricsets:
+    - ccr
+    - cluster_stats
+    - enrich
+    - index
+    - index_recovery
+    - index_summary
+    - ml_job
+    - node_stats
+    - node
+    - shard
+    - pending_tasks
+  period: 10s
+  hosts: ["{% for member in groups['elk'] %}http://{{ hostvars[member].ansible_default_ipv4.address }}:9200{% if not loop.last %}","{% endif %}{% endfor %}"]
+  username: "{{ elastic_user }}"
+  password: "{{ elastic_password }}"
+  xpack.enabled: true
+  cluster_uuid: {{ cluster_uid }}
+
+
+#- module: elasticsearch
+#  xpack.enabled: true
+#  period: 10s
+#  hosts: ["http://localhost:9200"]
+#  hosts: ["http://10.206.171.129:9200","http://10.206.171.132:9200","http://10.206.171.130:9200"]
+#  #username: "user"
+#  #password: "secret"
+

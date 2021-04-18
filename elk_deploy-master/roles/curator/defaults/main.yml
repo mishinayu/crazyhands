@@ -1,0 +1,4 @@
+---
+# defaults file for curator
+curator_yum_repo_enabled: true
+curator_home: /etc/curator

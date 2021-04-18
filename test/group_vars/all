@@ -1,0 +1,55 @@
+master_ip: 10.15.139.133
+node_master: 10.15.139.133
+node1_worker: 10.15.139.134
+hive_master_hostname: HUNTERS-HADP01T
+database_master_hostname: HUNTERS-SUPEIPT
+db_node: 10.15.139.131
+db_port: 5432
+hadoop_master: HUNTERS-HADP01T
+hbase_master_host: HUNTERS-HADP01T
+hbase_backup_master: HUNTERS-HADP02T
+
+
+hadoop_master: DWH-HDFE-FILE1T.passport.local
+secondary_node: DWH-HDFE-FILE2T.passport.local
+hbase_master_host: DWH-HDFE-FILE1T
+hbase_backup_master: DWH-HDFE-FILE2T
+env: mdm-test  #avaliable values: mdm, mdm-test, mdm-dev
+hostmetadata: '"Linux" "MDM Test"'
+master_ip: 10.19.72.140
+spark_master_ip: 10.19.72.140
+hive_master_hostname: DWH-HDFE-FILE1T
+database_master_hostname: DWH-POSTGR-DB1T
+spark_master_host: DWH-HDFE-FILE1T
+elk_cluster_hosts: '["10.206.171.129:5044","10.206.171.132:5044","10.206.171.130:5044"]'
+postgresql: 10.19.72.143
+nginx: 10.19.72.140
+kafka_node1: 10.19.72.140
+kafka_node2: 10.19.72.141
+
+hostmetadata: '"Linux" "СУПЕИП Тест"'
+db_node: 10.19.72.193
+env: eip-test  #avaliable values: eip, eip-test, eip-dev
+zoo1: 10.19.72.194
+zoo2: 10.19.72.195
+zooport: 2181
+zookeeper_connect: "{{ zoo1 }}:{{ zooport }},{{ zoo2 }}:{{ zooport }}"
+vernemq_cluster_discovery_node: 10.19.72.194 
+ip_balancer: ei.eip-test.kgh.mos.ru
+bmm_ip_balancer: ip_balancer
+hive: 10.19.73.65
+phoenix_node1: 10.19.72.140
+phoenix_node2: 10.19.72.141
+elk_cluster_hosts: '["10.206.171.129:5044","10.206.171.132:5044","10.206.171.130:5044"]'
+postgresql: 10.19.72.193
+nginx: 10.19.72.203
+wso2ei_node1: 10.19.72.200
+wso2ei_node2: 10.19.72.201
+
+kafka_node1: 10.222.132.66
+kafka_node2: 10.19.72.194
+kafka_node3: 10.19.72.195
+zookeeper_node2: 10.19.72.194 
+zookeeper_node3: 10.19.72.195
+nginx_node1: 10.19.72.203
+nginx_node2: 10.19.72.207

@@ -1,0 +1,22 @@
+[Unit]
+Description=Apache Hbase cluster
+After=network.target
+After=systemd-user-sessions.service
+After=network-online.target
+After=hadoop.service
+After=apache.zookeeper.service
+
+[Service]
+User=hadoop
+Type=simple
+ExecStart={{ phoenix_home }}/bin/queryserver.py
+ExecStop={{ phoenix_home }}/bin/queryserver.py
+TimeoutSec=30
+Restart=on-failure
+RestartSec=30
+StartLimitInterval=350
+StartLimitBurst=10
+
+[Install]
+WantedBy=multi-user.target
+

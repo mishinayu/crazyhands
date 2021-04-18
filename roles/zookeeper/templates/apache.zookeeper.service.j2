@@ -1,0 +1,17 @@
+[Unit]
+Description=Zookeeper Service
+
+[Service]
+Type=simple
+WorkingDirectory={{ zoohome }}
+PIDFile={{ zoodata }}/zookeeper_server.pid
+SyslogIdentifier=zookeeper
+ExecStart={{ zoohome }}/bin/zkServer.sh start {{ zoohome }}/conf/zoo.cfg
+ExecStop={{ zoohome }}/bin/zkServer.sh stop
+Restart=always
+TimeoutSec=20
+SuccessExitStatus=130 143
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

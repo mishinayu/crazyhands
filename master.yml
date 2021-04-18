@@ -1,0 +1,246 @@
+---
+# file master.yml
+- name: "Setup  project"
+  hosts: all
+  tasks:
+    - name: "Display  hostnames"
+      debug:
+        msg: "The hostname is {{ ansible_hostname }} and the OS is {{ ansible_os_family }}"
+    
+    - name: "Run common role"
+      import_role:
+        name: common
+
+- name: "Setup DB Tier"  
+  hosts: db
+  tasks:
+    - name: "Show database hosts"
+      debug:
+        msg: "The database's host is {{ ansible_hostname }}"
+
+    - name: "Run postgres role"
+      import_role:
+        name: pg
+
+
+- name: "Setup DB Tier | Hadoop"
+  hosts: hadoop
+  tasks:
+    - name: "Show hadoop hosts"
+      debug:
+        msg: "The hadoop host's is {{ ansible_hostname }}"
+
+    - name: "Run hadoop role"
+      import_role:
+        name: hadoop
+
+- name: "Setup DB Tier | Hive"
+  hosts: hive
+  tasks:
+    - name: "Show hive hosts"
+      debug:
+        msg: "The hive host's is {{ ansible_hostname }}"
+
+    - name: "Run hive role"
+      import_role:
+        name: hive
+- name: "Setup FrontEnd  Tier | Nginx"  
+  hosts: balancer
+  tasks:
+    - name: "Show  balancer hosts"
+      debug:
+        msg: "The balancer host's is {{ ansible_hostname }}"
+
+    - name: "Run nginx role"
+      import_role:
+        name: nginx
+
+
+- name: "Setup APPS Tier | Kubernetes"
+  hosts: k8s_master,k8s_node
+  tasks:
+    - name: "Show kubernetes's hosts"
+      debug:
+        msg: "The kubernetes's hosts is {{ ansible_hostname }}"
+
+    - name: "Run kubernetes role"
+      import_role:
+        name: kubernetes
+
+- name: "Setup Apps Tier | WSO2EI"  
+  hosts: wso2ei
+  tasks:
+    - name: "Show wso2ei hosts"
+      debug:
+        msg: "The wso2ei host's is {{ ansible_hostname }}"
+
+    - name: "Run wso2ei role"
+      import_role:
+        name: wso2ei
+
+- name: "Setup APPSTier | Wso2is"
+  hosts: wso2is
+  tasks:
+    - name: "Show wso2is hosts"
+      debug:
+        msg: "The wso2is host's is {{ ansible_hostname }}"
+
+    - name: "Run wso2is role"
+      import_role:
+        name: wso2is
+
+- name: "Setup APPS Tier | Kubernetes"
+  hosts: k8s_master,k8s_node
+  tasks:
+    - name: "Show kubernetes's hosts"
+      debug:
+        msg: "The kubernetes's hosts is {{ ansible_hostname }}"
+
+    - name: "Run kubernetes role"
+      import_role:
+        name: kubernetes
+
+- name: "Setup Apps tier | ELK Agents"
+  hosts: agents
+  tasks:
+    - name: "Display agents hostnames of MDM"
+      debug:
+        msg: "The hostname is {{ ansible_hostname }} and the OS is {{ ansible_os_family }}"
+
+    - name: "Run agent role"
+      import_role:
+        name: agents
+
+- name: "Setup Apps Tier | Apache ignite"
+  hosts: aig
+  tasks:
+    - name: "Show aig hosts"
+      debug:
+        msg: "The aig host's is {{ ansible_hostname }}"
+
+    - name: "Run apache ignite role" 
+      import_role:
+        name: aig
+
+- name: "Setup Apps Tier | Apache spark"
+  hosts: spark
+  tasks:
+    - name: "Show spark hosts"
+      debug:
+        msg: "The spark host's is {{ ansible_hostname }}"
+
+    - name: "Run spark role"
+      import_role:
+        name: spark
+
+- name: "Setup Apps Tier | Apache Zookeeper "
+  hosts: zoo
+  tasks:
+    - name: "Show Apache Zookeeper hosts"
+      debug:
+        msg: "The Apache Zookeeper's hosts is {{ ansible_hostname }}"
+
+    - name: "Run Apache Zookeeper role"
+      import_role:
+        name: zookeeper
+
+- name: "Setup Apps Tier | Kafka "  
+  hosts: kafka
+  tasks:
+    - name: "Show kafka hosts"
+      debug:
+        msg: "The kafka's hosts is {{ ansible_hostname }}"
+
+    - name: "Run kafka role"
+      import_role:
+        name: kafka
+
+
+- name: "Setup DB Tier | Hadoop"  
+  hosts: hadoop
+  tasks:
+    - name: "Show hadoop hosts"
+      debug:
+        msg: "The hadoop host's is {{ ansible_hostname }}"
+
+    - name: "Run hadoop role"
+      import_role:
+        name: hadoop
+
+- name: "Setup DB Tier | Hbase"
+  hosts: hbase
+  tasks:
+    - name: "Show hbase hosts"
+      debug:
+        msg: "The hbase host's is {{ ansible_hostname }}"
+
+    - name: "Run hbase role"
+      import_role:
+        name: hbase
+
+- name: "Setup DB Tier | Hive"  
+  hosts: hive
+  tasks:
+    - name: "Show hive hosts"
+      debug:
+        msg: "The hive host's is {{ ansible_hostname }}"
+
+    - name: "Run hive role"
+      import_role:
+        name: hive
+
+- name: "Setup Apps tier | hue"
+  hosts: hue
+  tasks:
+    - name: "Display agents hostnames of MDM"
+      debug:
+        msg: "The hostname is {{ ansible_hostname }} and the OS is {{ ansible_os_family }}"
+
+    - name: "Run hue role"
+      import_role:
+        name: hue
+        
+        - name: "Setup APPS Tier | VerneMQ"  
+  hosts: verne 
+  tasks:
+    - name: "Show verne's hosts"
+      debug:
+        msg: "The verne's hosts is {{ ansible_hostname }}"
+
+    - name: "Run verne role"
+      import_role:
+        name: verne
+
+- name: "Setup Apps Tier | WSO2AM"  
+  hosts: wso2am
+  tasks:
+    - name: "Show wso2am hosts"
+      debug:
+        msg: "The wso2am host's is {{ ansible_hostname }}"
+
+    - name: "Run wso2am role"
+      import_role:
+        name: wso2am
+
+- name: "Setup Apps Tier | WSO2EI"  
+  hosts: wso2ei
+  tasks:
+    - name: "Show wso2ei hosts"
+      debug:
+        msg: "The wso2ei host's is {{ ansible_hostname }}"
+
+    - name: "Run wso2ei role"
+      import_role:
+        name: wso2ei
+
+- name: "Setup Apps Tier | WSO2BPS"
+  hosts: wso2bps
+  tasks:
+    - name: "Show wso2bps hosts"
+      debug:
+        msg: "The wso2bps host's is {{ ansible_hostname }}"
+
+    - name: "Run wso2bps role"
+      import_role:
+        name: wso2bps
+

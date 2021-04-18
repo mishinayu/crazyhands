@@ -1,0 +1,13 @@
+---
+# defaults file for wso2is
+wso2is_version: 5.10.0
+wso2_user: wso2
+wso2_group: wso2
+wso2is_database_user: regadmin
+wso2is_database_pass: regadmin
+wso2is_home: /usr/lib64/wso2/wso2is/{{ wso2is_version}}
+jdbc_file: postgresql-42.2.12.jar
+jdbc_url_path: https://jdbc.postgresql.org/download/{{ jdbc_file }}
+registry_local_id: "{{ groups['wso2is'].index(inventory_hostname)+1 }}"
+
+

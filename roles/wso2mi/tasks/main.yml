@@ -1,0 +1,84 @@
+---
+# tasks file for wso2mi
+- name: "Download wso2mi version {{ wso2mi_version }}"
+  get_url:
+    url: "{{ mi_download_url }}"
+    dest: /tmp/
+  tags: wsomi
+
+- name: "Download wso2mi_dash version {{ wso2mi_dash_version }}"
+  get_url:
+    url: "{{ mi_dash_download_url }}"
+    dest: /tmp/
+  tags: wsomi
+
+- name: "Create wso2mi directory"
+  file:
+    path: "{{ mi_home }}"
+    state: directory
+  tags: wsomi
+
+- name: "Create wso2mi_dash directory"
+  file:
+    path: "{{ mi_dash_home }}"
+    state: directory
+  tags: wsomi
+
+- name: "Unpack wso2mi"
+  unarchive:
+    src: "/tmp/{{ wso2mi_file }}"
+    dest: "{{ mi_home }}"
+    remote_src: yes
+  tags: wsomi
+
+- name: "Unpack wso2mi_dash"
+  unarchive:
+    src: "/tmp/{{ wso2mi_dash_file }}"
+    dest: "{{ mi_dash_home }}"
+    remote_src: yes
+  tags: wsomi
+
+
+- name: Copy wso2mi-integrator service file
+  template:
+    src: wso2mi.service.j2
+    dest: /etc/systemd/system/wso2mi.service
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version > '6'
+  tags: wsomi
+
+- name: Copy wso2mi_dash service file
+  template:
+    src: wso2mi.dashboard.service.j2
+    dest: /etc/systemd/system/wso2mi.dashboard.service
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version > '6'
+  tags: wsomi
+
+- name: "Copy dashboard.sh.j2"
+  template:
+    src: "dashboard.sh.j2"
+    dest: "{{ mi_dash_home }}/wso2mi-monitoring-dashboard-1.1.0/bin/dashboard.sh"
+  tags: wsomi
+
+- name: "Copy micro-integrator.sh.j2"
+  template:
+    src: "micro-integrator.sh.j2"
+    dest: "{{ mi_home }}/wso2mi-1.1.0/bin/micro-integrator.sh"
+  tags: wsomi
+  
+- name: "Start wso2mi-integrator as a service"
+  systemd:
+    name: wso2mi
+    state: started
+    enabled: yes
+    daemon_reload: yes
+  tags: wsomi
+
+- name: "Start wso2mi-dashboard as a service"
+  systemd:
+    name: wso2mi.dashboard
+    state: started
+    enabled: yes
+    daemon_reload: yes
+  tags: wsomi
+
+

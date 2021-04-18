@@ -1,0 +1,9 @@
+---
+# defaults file for kubernetes
+kuber_cluster_master: false
+kubernetes_yum_repo_enabled: true
+kubernetes_user: kubernetes
+kubernetes_group: kubernetes
+kubernetes_dir: /etc/kubernetes/
+kubernetes_uhome: /home/kubernetes
+

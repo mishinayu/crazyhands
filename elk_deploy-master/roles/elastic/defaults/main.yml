@@ -1,0 +1,13 @@
+---
+# defaults file for elastic
+elastic_yum_repo_enabled: true
+elastic_version: 7.10.0
+elastic_home: /etc/elasticsearch
+elastic_user: elasticsearch
+elastic_group: elasticsearch
+elastic_path_data: /var/lib/elasticsearch
+elastic_path_logs: /var/log/elasticsearch
+elastic_http_port: 9200
+jvm_memory_xms: -Xms4g 
+jvm_memory_xmx: -Xmx4g
+elk_cluster_name: elk.kgh.cluster

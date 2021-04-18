@@ -1,0 +1,80 @@
+# this is the site wide default
+#database
+wso2ei_database_user: xxxxxxx
+wso2ei_database_pass: xxxxxxx
+wso2is_database_user: xxxxxxx
+wso2is_database_pass: xxxxxxx
+wso_identity_db: wso2_identity_db
+wso_shared_db: wso2_shared_db
+hive_database_user: xxxxxxx
+hive_database_pass: xxxxxxx
+#home
+hadoop_version: 3.2.0
+hadoop_home: /etc/hadoop/hadoop-{{ hadoop_version }}
+hbase_version: 2.2.4
+hbase_home: /etc/apache/hbase-{{ hbase_version }}
+phoenix_version: 5.0.0
+phoenix_home: /etc/apache/apache-phoenix-{{ phoenix_version }}-HBase-2.0-bin
+#nginx
+env: hunters-test  #avaliable values: hunters, hunters-test, hunters-dev
+corpdomain: kgh.mos.ru
+wso_domain: "{{ env }}.{{ corpdomain }}"
+confd: /etc/nginx/conf.d
+ei_https_port: 9443
+ei_http_port: 9763
+wso2is_https_port: 9443
+wso2is_http_port: 9763
+hnm_http_port: 9870
+hrm_http_port: 8088
+hnm2_http_port: 8042
+hnm3_http_port: 8042
+hbase_ms_http_port: 16010
+hbase_rs_http_port: 16030
+
+
+#home
+hadoop_version: 3.2.0
+hadoop_home: /etc/hadoop/hadoop-{{ hadoop_version }}
+hbase_version: 2.2.4
+hbase_home: /etc/apache/hbase-{{ hbase_version }} 
+phoenix_version: 5.0.0
+phoenix_home: /etc/apache/apache-phoenix-{{ phoenix_version }}-HBase-2.0-bin
+hadoop_uhome: /home/hadoop
+hive_home: /etc/hive/apache-hive-3.1.2-bin
+hadoop_user: hadoop
+hadoop_group: hadoop
+hadoop_download_url: https://archive.apache.org/dist/hadoop/common/hadoop-{{ hadoop_version }}/hadoop-{{ hadoop_version }}.tar.gz
+hadoop_bin: "{{ hadoop_home }}/bin"
+hdfs_tmp: /data/hdfs/tmp
+hdfs_datanode: /data/hdfs/datanode
+hdfs_namenode: /data/hdfs/namenode
+hbase_download_url: http://archive.apache.org/dist/hbase/2.2.4/hbase-2.2.4-bin.tar.gz
+hdfs_namenodes: "{{ groups.hadoop }}"
+hbase_cluster: false
+hadoop_cluster_master: false
+#nginx
+corpdomain: kgh.mos.ru
+confd: /etc/nginx/conf.d
+hnm_http_port: 9870
+hrm_http_port: 8088
+hue_http_port: 8888
+webui_http_port: 8080
+
+# this is the site wide default
+corpdomain: kgh.mos.ru
+wso_domain: "{{ env }}.{{ corpdomain }}"
+confd: /etc/nginx/conf.d
+am_https_port: 9443
+ei_https_port: 8243
+ei_http_port: 8280
+ui_https_port: 9443
+bps_http_port: 9765
+bps_https_port: 9445
+vq_http_port: 8888
+wso2_database_user: wso2
+wso2_database_pass: wso2carbon
+zabbix_server: monitor.gkh.local
+bastion_host: SUPEIP-DB1T
+hbase_ms_http_port: 16010
+hbase_rs_http_port: 16030
+zabbix_server: monitor.gkh.local

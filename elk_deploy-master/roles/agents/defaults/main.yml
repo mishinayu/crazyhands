@@ -1,0 +1,8 @@
+---
+# defaults file for agents
+agents_yum_repo_enabled: true
+filebeat_version: 7.10.0
+metricbeat_version: 7.10.0
+filebeat_home: /etc/filebeat
+metricbeat_home: /etc/metricbeat
+

@@ -1,0 +1,2 @@
+{ "insecure-registries": ["10.15.75.132:5000", "10.15.75.132:5050", "registry.docker.test.eirc.mos.ru:5000", "registry.docker.ghk.mos.ru:5000", "regdocker.devops.gkh.local:5000", "regdocker.devops.gkh.local:5050"] }
+

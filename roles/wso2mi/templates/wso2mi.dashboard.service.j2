@@ -1,0 +1,19 @@
+[Unit]
+Description=WSO2 Dashboard Micro Integrator
+After=network.target
+After=systemd-user-sessions.service
+After=network-online.target
+
+[Service]
+Type=forking
+ExecStart={{ mi_dash_home }}/wso2mi-monitoring-dashboard-1.1.0/bin/dashboard.sh start
+ExecStop={{ mi_dash_home }}/wso2mi-monitoring-dashboard-1.1.0/bin/dashboard.sh stop
+ExecRestart={{ mi_dash_home }}/wso2mi-monitoring-dashboard-1.1.0/bin/dashboard.sh restart
+PIDFile={{ mi_dash_home }}/wso2mi-monitoring-dashboard-1.1.0/wso2/server/runtime.pid
+Restart=on-failure
+RestartSec=5
+StartLimitInterval=60s
+StartLimitBurst=3
+
+[Install]
+WantedBy=multi-user.target

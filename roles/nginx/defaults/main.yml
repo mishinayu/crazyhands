@@ -1,0 +1,9 @@
+---
+# defaults file for nginx
+nginx_yum_repo_enabled: true
+server_csr: /etc/ssl/certs/server.csr
+server_pem: /etc/ssl/certs/server.pem
+server_crt: /etc/ssl/certs/server.crt
+cert_filename: server.crt
+confd: /etc/nginx/conf.d
+

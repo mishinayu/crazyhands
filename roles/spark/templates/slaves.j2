@@ -1,0 +1,4 @@
+{% for host in groups['spark'] %}
+{{ hostvars[host]['ansible_hostname'] }}.passport.local
+{% endfor %}
+

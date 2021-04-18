@@ -1,0 +1,150 @@
+---
+# tasks file for agents
+- name: "Enable agents repo"
+  template:
+    src: agents.repo.j2
+    dest: /etc/yum.repos.d/agents.repo
+    owner: root
+    group: root
+    mode: 0644
+  when: agents_yum_repo_enabled
+  tags: agents
+
+- name: "Ensure a list of agents related packages are installed"
+  yum:
+    name: "{{ packages }}"
+  vars:
+     packages:
+     - filebeat-{{ filebeat_version }}
+     - metricbeat-{{ metricbeat_version }}
+     state: present
+  tags: agents
+
+- name: "Copy template filebeat.yml.j2"
+  template:
+    src: "filebeat.yml.j2"
+    dest: "{{ filebeat_home }}/filebeat.yml"
+    mode: 0644
+  tags: agents
+
+- name: "Copy template metricbeat.yml.j2"
+  template:
+    src: "metricbeat.yml.j2"
+    dest: "{{ metricbeat_home }}/metricbeat.yml"
+    mode: 0644
+  tags: agents
+
+- name: "Copy template docker.yml.j2"
+  template:
+    src: "docker.yml.j2"
+    dest: "{{ metricbeat_home }}/modules.d/docker.yml"
+    mode: 0644
+  tags: agents
+
+- name: "Copy template postgresql_metricbeat.yml.j2"
+  template:
+    src: "postgresql_metricbeat.yml.j2"
+    dest: "{{ metricbeat_home }}/modules.d/postgresql.yml"
+    mode: 0644
+  delegate_to: "{{ postgresql }}"
+  tags: agents
+
+- name: "Copy template postgresql.yml.j2"
+  template:
+    src: "postgresql.yml.j2"
+    dest: "{{ filebeat_home }}/modules.d/postgresql.yml"
+    mode: 0644
+  delegate_to: "{{ postgresql }}"
+  tags: agents
+
+- name: "Copy template kafka.yml.j2"
+  template:
+    src: "kafka.yml.j2"
+    dest: "{{ filebeat_home }}/modules.d/kafka.yml"
+    mode: 0644
+  delegate_to: "{{ kafka_node1 }}"
+  tags: agents23
+
+- name: "Copy template kafka.yml.j2"
+  template:
+    src: "kafka.yml.j2"
+    dest: "{{ filebeat_home }}/modules.d/kafka.yml"
+    mode: 0644
+  delegate_to: "{{ kafka_node2 }}"
+  tags: agents23
+
+- name: "Copy template kafka_metricbeat.yml.j2"
+  template:
+    src: "kafka_metricbeat.yml.j2"
+    dest: "{{ metricbeat_home }}/modules.d/kafka.yml"
+    mode: 0644
+  delegate_to: "{{ kafka_node1 }}"
+  tags: agents23
+
+- name: "Copy template kafka_metricbeat.yml.j2"
+  template:
+    src: "kafka_metricbeat.yml.j2"
+    dest: "{{ metricbeat_home }}/modules.d/kafka.yml"
+    mode: 0644
+  delegate_to: "{{ kafka_node2 }}"
+  tags: agents23
+
+
+- name: "Enable and start filebeat"
+  systemd:
+    name: filebeat
+    state: restarted
+    enabled: yes
+    daemon_reload: yes
+  tags: agents,agents_restart
+
+- name: "Enable and start metricbeat"
+  systemd:
+    name: metricbeat
+    state: restarted
+    enabled: yes
+    daemon_reload: yes
+  tags: agents,agents_restart
+
+- name: "enable filebeat modules system"
+  shell: "filebeat modules enable system"
+  tags: agents
+
+- name: "enable metricbeat modules system"
+  shell: "metricbeat modules enable system"
+  tags: agents
+
+- name: "Enable filebeat modules postgresql"
+  shell: "filebeat modules enable postgresql"
+  delegate_to: "{{ postgresql }}"
+  tags: agents
+
+- name: "enable metricbeat docker modules"
+  shell: "metricbeat modules enable docker"
+  tags: agents
+
+- name: "Enable filebeat modules nginx"
+  shell: "filebeat modules enable nginx"
+  delegate_to: "{{ nginx }}"
+  tags: agents
+
+- name: "Enable filebeat modules kafka"
+  shell: "filebeat modules enable kafka"
+  delegate_to: "{{ kafka_node1 }}"
+  tags: agents23
+
+- name: "Enable filebeat modules kafka"
+  shell: "filebeat modules enable kafka"
+  delegate_to: "{{ kafka_node2 }}"
+  tags: agents23
+
+- name: "Enable metricbeat modules kafka"
+  shell: "metricbeat modules enable kafka"
+  delegate_to: "{{ kafka_node1 }}"
+  tags: agents23
+
+- name: "Enable metricbeat modules kafka"
+  shell: "metricbeat modules enable kafka"
+  delegate_to: "{{ kafka_node2 }}"
+  tags: agents23
+

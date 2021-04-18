@@ -1,0 +1,61 @@
+
+- hosts: k8s_master,k8s_node
+  gather_facts: false
+  vars:
+    ansible_python_interpreter: /usr/bin/python
+
+  tasks:
+    - name: install python2-pip
+      yum:
+        name:  python-pip
+        state: present
+
+    - name: install docker
+      pip:
+        name: "{{ packages }}"
+      vars:
+        packages:
+        - docker
+        - pexpect
+
+#    - name: Get running containers
+#      docker_host_info:
+#        containers: yes
+#      register: docker_info
+ 
+#    - name: Debug running
+#      debug:
+#        var: docker_info
+
+    - name: Prune all containers
+      docker_prune:
+        containers: yes
+      register: prune
+      
+#    - name: Stop running containers
+#      docker_container:
+#        force_kill: yes
+#        name: "{{ item }}"
+#        state: absent
+#      loop: "{{ docker_info.containers | map(attribute='Id') | list }}"
+#      register: info
+
+    - name: Debug prune containers
+      debug:
+        var: prune
+
+    - name: kubeadm reset
+      expect:
+        command: kubeadm reset
+        responses:
+          (.*)Are you sure you want to proceed(.*): "y"
+        timeout: 10
+
+
+    - name: rke remove
+      expect:
+        command: rke remove --config /home/kubernetes/cluster.yml
+        responses:
+          (.*)Are you sure you want to remove Kubernetes(.*): "y"
+        timeout: 10
+      when: master_ip in inventory_hostname

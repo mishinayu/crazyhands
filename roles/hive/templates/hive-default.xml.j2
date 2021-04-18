@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<configuration>
+
+  <property>
+  <name>hive.server2.thrift.port</name>
+  <value>10000</value>
+  <description>Port number of HiveServer2 Thrift interface when hive.server2.transport.mode is 'binary'.</description>
+  </property>
+
+  <property>
+    <name>hive.exec.scratchdir</name>
+    <value>/data/hive/scratch</value>
+    <description>Scratch space for Hive jobs</description>
+  </property>
+
+
+<property>
+  <name>javax.jdo.option.ConnectionURL</name>
+  <value>jdbc:postgresql://{{ database_master_hostname }}:{{ hive_database_port }}/{{ hive_database }}</value>
+</property>
+
+<property>
+  <name>javax.jdo.option.ConnectionDriverName</name>
+  <value>org.postgresql.Driver</value>
+</property>
+ 
+<property>
+  <name>javax.jdo.option.ConnectionUserName</name>
+  <value>hiveuser</value>
+</property>
+ 
+<property>
+  <name>javax.jdo.option.ConnectionPassword</name>
+  <value>tgbfgh123</value>
+</property>
+
+<property>
+  <name>hive.metastore.uris</name>
+  <value>thrift://{{ ansible_hostname }}:9083</value>
+  <description>IP address (or fully-qualified domain name) and port of the metastore host</description>
+</property>
+  <property>
+    <name>hive.exec.max.dynamic.partitions</name>
+    <value>2000</value>
+    <description>Maximum number of dynamic partitions allowed to be created in total.</description>
+  </property>
+
+
+  <property>
+    <name>datanucleus.autoCreateSchema</name>
+    <value>false</value>
+  </property>
+
+  <property>
+  <name>hive.metastore.schema.verification</name>
+  <value>true</value>
+  </property>
+  
+</configuration>
+

@@ -1,0 +1,7 @@
+---
+# Kafka vars
+upstream_kafka: kafka
+upstream_ip: "{{ inventory_hostname }}"
+upstream_port: 9092
+...
+

@@ -1,0 +1,14 @@
+hostmetadata: '"Linux" "MON_test"'
+env: mon-test  #avaliable values: mon, mon-test, mon-dev
+elk_cluster_master: MON-APP1T
+#elk_cluster_master: 10.206.171.129
+kibana_hosts: "10.206.171.129"
+elastic_user: elastic
+elastic_password: xxxxxxxxxxxxxxxxxxx
+kibana_user: kibana
+kibana_password: xxxxxxxxxxxxxxxxxxx
+logstash_user: logstash_system
+logstash_password: xxxxxxxxxxxxxxxxxxx
+cluster_uid: xxxxxxxxxxxxxxxxx
+master_ip: 10.206.171.129
+

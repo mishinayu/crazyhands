@@ -1,0 +1,105 @@
+---
+# tasks file for common
+- name: "Sync resolv.conf between nodes"
+  copy:
+    src: "{{ role_path }}/files/resolv.conf"
+    dest: "/etc/resolv.conf"
+    mode: 0644
+    owner: "root"
+    group: "root"
+    backup: yes
+  tags: common
+
+- name: "Install EPEL repo package"
+  yum:
+    name: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
+    state: present
+  tags: common
+
+- name: "Ensure a list of common packages installed"
+  yum:
+    name: "{{ packages }}"
+  vars:
+     packages:
+     - jq
+     - tar
+     - make
+     - rsync
+     - vim
+     - bash-completion
+     - nc
+     - telnet
+     - lsof
+     - bzip2
+     - wget
+     - git
+     - device-mapper-persistent-data
+     - lvm2
+     - java-1.8.0-openjdk
+     - net-tools
+     - nmap
+     - pv
+     - htop
+     - python-netaddr
+     - python-pip
+     - python-psycopg2
+     - java-1.8.0-openjdk
+     state: present
+  tags: common
+
+- include_tasks: docker.yml
+  when: docker_install == true
+  tags: common
+
+- name: "Zabbix | Add Zabbix repo"
+  yum:
+    name: https://repo.zabbix.com/zabbix/5.0/rhel/8/x86_64/zabbix-release-5.0-1.el8.noarch.rpm
+    state: present
+  tags: common
+
+- name: "Zabbix | Install zabbix-agent"
+  yum:
+    name: zabbix-agent
+    state: latest
+  tags: common
+
+- name: "Zabbix | Change zabbix_agentd.conf"
+  lineinfile:
+       dest: "/etc/zabbix/zabbix_agentd.conf"
+       regexp: "{{ item.regexp }}"
+       line: "{{ item.line }}"
+       backrefs: yes
+       state: present
+  with_items:
+        - { regexp: 'LogFileSize=', line: 'LogFileSize=10' }
+        - { regexp: 'Server=', line: 'Server={{ zabbix_server }}' }
+        - { regexp: 'Hostname=', line: 'Hostname={{ ansible_hostname }}' }
+        - { regexp: 'ServerActive=', line: 'ServerActive={{ zabbix_server }}' }
+        - { regexp: 'HostMetadata=', line: 'HostMetadata={{ hostmetadata }}' }
+  tags: common
+
+
+- name: "Zabbix | Enable and start zabbix-agent"
+  systemd:
+    name: zabbix-agent
+    enabled: yes
+    state: restarted
+    daemon_reload: yes
+  tags: common
+
+- name: update hosts file by appending records
+  blockinfile:
+    dest: /etc/hosts
+    block: "{{ lookup('template', 'hosts.j2') }}"
+    insertafter: EOF
+  tags: common
+
+- name: "Copy jdk_home.sh to /etc/profile.d"
+  copy:
+    src: "{{ role_path }}/files/jdk_home.sh"
+    dest: "/etc/profile.d/jdk_home.sh"
+    mode: 0644
+    owner: "root"
+    group: "root"
+  tags: common
+

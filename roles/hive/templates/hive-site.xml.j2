@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<configuration>
+   <property>
+     <name>hive.exec.scratchdir</name>
+     <value>{{ hive_scratch_dir }}</value>
+     <description>Scratch space for Hive jobs</description>
+   </property>
+   <property>
+       <name>hive.metastore.uris</name>
+       <value>thrift://{{ ansible_hostname }}:{{ hive_metastore_port }}</value>
+       <description>IP address (or fully-qualified domain name) and port of the metastore host</description>
+   </property>
+    <property>
+        <name>javax.jdo.option.ConnectionDriverName</name>
+        <value>org.postgresql.Driver</value>
+    </property>
+    <property>
+       <name>hive.materializedview.rewriting</name>
+      <value>true</value>
+    </property>
+     <property>
+        <name>hive.materializedview.rewriting.time.window</name>
+        <value>10min</value>
+    </property>
+    <property>
+      <name>javax.jdo.option.ConnectionURL</name>
+      <value>jdbc:postgresql://{{ database_master_hostname }}:{{ hive_database_port }}/{{ hive_database }}</value>
+    </property>
+    <property>
+        <name>javax.jdo.option.ConnectionUserName</name>
+        <value>{{ hive_database_user }}</value>
+    </property>
+    <property>
+        <name>javax.jdo.option.ConnectionPassword</name>
+        <value>{{ hive_database_pass }}</value>
+    </property>
+    <property>
+        <name>hive.server2.thrift.port</name>
+        <value>10000</value>
+    </property>
+    <property>
+        <name>hive.server2.enable.doAs</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>hive.execution.engine</name>
+        <value>mr</value>
+    </property>
+    <property>
+        <name>hive.metastore.port</name>
+        <value>{{ hive_metastore_port }}</value>
+    </property>
+    <property>
+        <name>mapreduce.input.fileinputformat.input.dir.recursive</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>hive.exec.dynamic.partition.mode</name>
+        <value>nonstrict</value>
+    </property>
+    <property>
+        <name>hive.support.concurrency</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>hive.enforce.bucketing</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>hive.txn.manager</name>
+        <value>org.apache.hadoop.hive.ql.lockmgr.DbTxnManager</value>
+    </property>
+    <property>
+        <name>hive.compactor.initiator.on</name>
+        <value>true</value>
+    </property>
+    <property>
+     <name>hive.compactor.worker.threads</name>
+     <value>1</value>
+ </property>
+   <property>
+       <name>hive.server2.enable.doAs</name>
+        <value>false</value>
+  </property>
+  <property>
+    <name>hive.exec.max.dynamic.partitions</name>
+    <value>2000</value>
+    <description>Maximum number of dynamic partitions allowed to be created in total.</description>
+  </property>
+  <property>
+    <name>hive.exec.reducers.bytes.per.reducer</name>
+    <value>500000</value>
+    <description>size per reducer.The default is 256Mb, i.e if the input size is 1G, it will use 4 reducers.</description>
+  </property>
+</configuration>
+

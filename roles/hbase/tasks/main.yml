@@ -1,0 +1,169 @@
+---
+# tasks file for hbase
+- name: "Hbase | Download hbase version {{ hbase_version }}"
+  get_url:
+    url: "{{ hbase_download_url }}"
+    dest: "/tmp/hbase-{{ hbase_version }}-bin.tar.gz"
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+  tags: hbase
+
+- name: "Hbase | Create /etc/hbase directory"
+  file:
+    path: /etc/apache/hbase-{{ hbase_version }}
+    state: directory
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+    mode: 0755
+  tags: hbase
+
+- name: "Change file ownership, group and permissions"
+  file:
+    path: "/etc/apache/"
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+    mode: 0755
+  tags: hbase
+
+- name: "Hbase| Check if hbase archive is already unpacked"
+  find:
+    paths: "{{ hadoop_home }}"
+    file_type: file
+    patterns: "hbase-site.xml"
+    recurse: yes
+  register: filesfound_hbase
+  become: true
+  become_user: "{{ hadoop_user }}"
+  tags: hbase
+
+- name: "Hbase | Debug var filesfound_hbase"
+  debug:
+    var: filesfound_hbase.matched
+  tags: hbase
+
+- name: "Hbase | Extract hbase archive"
+  unarchive:
+    src: "/tmp/hbase-{{ hbase_version }}-bin.tar.gz"
+    dest: /etc/apache
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+    remote_src: yes
+  become: true
+  become_user: "{{ hadoop_user }}"
+  when:
+  - filesfound_hbase.matched|int == 0
+  tags: hbase
+  
+- name: "Add hbase and hadoop environment variables to .bash_profile"
+  blockinfile:
+    path: "{{ hadoop_uhome}}/.bash_profile"
+    create: yes
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+    mode: 0400
+    block: |
+      export HBASE_HOME={{ hbase_home }}
+      export HADOOP_HOME={{ hadoop_home }}   
+      export PATH=$PATH:{{ hadoop_home }}/bin:{{ hadoop_home }}/sbin:{{ hbase_home }}/bin:{{ phoenix_home }}/bin:{{ hive_home }}/bin
+      export PHOENIX_HOME={{ phoenix_home }}
+      export CLASSPATH=$CLASSPATH:$HBASE_HOME/lib
+    state: present
+  tags: hbase
+
+- name: "Hbase | Add the service scripts"
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: "{{ hadoop_user}}"
+    group: "{{ hadoop_group }}"
+  with_items:
+  - {src: "hbase-env.sh.j2", dest: "{{ hbase_home }}/conf/hbase-env.sh"}
+  - {src: "hbase-site.xml.j2", dest: "{{ hbase_home }}/conf/hbase-site.xml"}
+  - {src: "regionservers.j2", dest: "{{ hbase_home }}/conf/regionservers"}
+  tags: hbase1
+
+- name: "Hbase | Add the service script backup-master"
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: "{{ hadoop_user}}"
+    group: "{{ hadoop_group }}"
+  with_items:
+  - {src: "backup-masters.j2", dest: "{{ hbase_home }}/conf/backup-masters"}
+  when: hbase_cluster == true
+  tags: hbase
+
+- name: "Hbase | Copy template hbase.service.j2"
+  template:
+    src: "hbase.service.j2"
+    dest: /etc/systemd/system/hbase.service
+  when:
+    - master_ip in inventory_hostname 
+    - ansible_distribution == "RedHat" and ansible_distribution_major_version > '6'
+  tags: hbase
+
+# PHOENIX STARTS HERE
+
+- name: "Phoenix | Downloading Apache Phoenix binaries"
+  get_url:
+    url: "https://apache-mirror.rbc.ru/pub/apache/phoenix/apache-phoenix-5.0.0-HBase-2.0/bin/apache-phoenix-5.0.0-HBase-2.0-bin.tar.gz"
+    dest: /tmp
+  tags: hbase,phoenix
+
+- name: "Phoenix | Unpacking Apache Phoenix binaries archive"
+  unarchive:
+    src: /tmp/apache-phoenix-5.0.0-HBase-2.0-bin.tar.gz
+    dest: /etc/apache
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+    remote_src: yes
+  become: true
+  become_user: "{{ hadoop_user }}"
+  tags: hbase,phoenix
+
+- name: "Phoenix | Phoenix-server JAR deploying"
+  copy:
+    src: "/etc/apache/apache-phoenix-5.0.0-HBase-2.0-bin/{{ item }}"
+    dest: "/etc/apache/hbase-{{ hbase_version }}/lib/{{ item }}"
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+    remote_src: yes
+  become: true
+  with_items:
+  - phoenix-5.0.0-HBase-2.0-server.jar
+  - phoenix-5.0.0-HBase-2.0-client.jar
+  - phoenix-5.0.0-HBase-2.0-queryserver.jar 
+  - phoenix-core-5.0.0-HBase-2.0.jar
+  tags: hbase,phoenix
+
+- name: "Phoenix | Phoenix-server spark JAR deploying"
+  copy:
+    src: "/etc/apache/apache-phoenix-5.0.0-HBase-2.0-bin/{{ item }}"
+    dest: "/etc/spark/{{ spark_home }}}/jars/{{ item }}"
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+    remote_src: yes
+  become: true
+  with_items:
+  - phoenix-spark-5.0.0-HBase-2.0.jar
+  - phoenix-5.0.0-HBase-2.0-client.jar 
+  tags: hbase,phoenix
+
+
+- name: "Hbase | Copy template queryserver.service.j2"
+  template:
+    src: "queryserver.service.j2"
+    dest: /etc/systemd/system/queryserver.service
+  when:
+    - master_ip in inventory_hostname
+  tags: hbase,phoenix
+
+- name: "Hbase | Enable and start hbase, phoenix"
+  systemd:
+    name: hbase
+    state: restarted
+    enabled: yes
+    daemon_reload: yes
+  when: master_ip in inventory_hostname
+  tags: hbase,phoenix
+...

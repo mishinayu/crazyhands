@@ -1,0 +1,9 @@
+---
+# vars file for hive
+hive_database_user: hiveuser
+hive_database_pass: tgbfgh123
+hive_database: metastore
+hive_database_port: 5432
+hive_scratch_dir: /data/hive/scratch
+hive_metastore_port: 9083
+

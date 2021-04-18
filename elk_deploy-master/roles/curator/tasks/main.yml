@@ -1,0 +1,53 @@
+---
+# tasks file for curator
+- name: "Enable curator repo"
+  template:
+    src: curator.repo.j2
+    dest: /etc/yum.repos.d/curator.repo
+    owner: root
+    group: root
+    mode: 0644
+  when: curator_yum_repo_enabled
+  tags: curator
+
+- name: "Ensure a list of curator related packages are installed"
+  yum:
+    name: "{{ packages }}"
+  vars:
+     packages:
+     - elasticsearch-curator
+     state: present
+  tags: curator
+
+- name: "Create /etc/curator directory"
+  file:
+    path: /etc/curator
+    state: directory
+    mode: 0755
+  tags: curator
+
+- name: "Copy template config.yml.j2"
+  template:
+    src: "config.yml.j2"
+    dest: "{{ curator_home }}/config.yml"
+    mode: 0644
+  tags: curator
+
+- name: "Copy template action.yml.j2"
+  template:
+    src: "action.yml.j2"
+    dest: "{{ curator_home }}/action.yml"
+    mode: 0644
+  tags: curator
+
+- name: "Clear old index log files"
+  cron:
+    name: "Clear old index logs"
+    user: "root"
+    minute: 0
+    hour: 23
+    job: "curator --config {{ curator_home }}/config.yml {{ curator_home }}/action.yml" 
+    state: present
+  tags: curator
+
+

@@ -1,0 +1,122 @@
+---
+# tasks file for agents
+- name: "Enable agents repo"
+  template:
+    src: agents.repo.j2
+    dest: /etc/yum.repos.d/agents.repo
+    owner: root
+    group: root
+    mode: 0644
+  when: agents_yum_repo_enabled
+  tags: agents
+
+- name: "Ensure a list of agents related packages are installed"
+  yum:
+    name: "{{ packages }}"
+  vars:
+     packages:
+     - filebeat-{{ filebeat_version }}
+     - metricbeat-{{ metricbeat_version }}
+     state: present
+  tags: agents
+
+- name: "Copy template filebeat.yml.j2"
+  template:
+    src: "filebeat.yml.j2"
+    dest: "{{ filebeat_home }}/filebeat.yml"
+    mode: 0644
+  tags: agents
+
+- name: "Copy template metricbeat.yml.j2"
+  template:
+    src: "metricbeat.yml.j2"
+    dest: "{{ metricbeat_home }}/metricbeat.yml"
+    mode: 0644
+  tags: agents
+
+- name: "Copy template elasticsearch-.yml.j2"
+  template:
+    src: "elasticsearch.yml.j2"
+    dest: "{{ filebeat_home }}/modules.d/elasticsearch.yml"
+    mode: 0644
+  tags: agents
+
+- name: "Copy template elasticsearch-xpack.yml.j2"
+  template:
+    src: "elasticsearch-xpack.yml.j2"
+    dest: "{{ metricbeat_home }}/modules.d/elasticsearch-xpack.yml"
+    mode: 0644
+  tags: agents
+
+- name: "Copy template logstash-xpack.yml.j2"
+  template:
+    src: "logstash-xpack.yml.j2"
+    dest: "{{ metricbeat_home }}/modules.d/logstash-xpack.yml"
+    mode: 0644
+  tags: agents
+
+- name: "Copy template beat-xpack.yml.j2"
+  template:
+    src: "beat-xpack.yml.j2"
+    dest: "{{ metricbeat_home }}/modules.d/beat-xpack.yml"
+    mode: 0644
+  tags: agents
+
+- name: "Copy template kibana-xpack.yml.j2"
+  template:
+    src: "kibana-xpack.yml.j2"
+    dest: "{{ metricbeat_home }}/modules.d/kibana-xpack.yml"
+    mode: 0644
+  tags: agents
+
+- name: "Enable and start filebeat"
+  systemd:
+    name: filebeat
+    state: restarted
+    enabled: yes
+    daemon_reload: yes
+  tags: agents,restart
+
+- name: "Enable and start metricbeat"
+  systemd:
+    name: metricbeat
+    state: restarted
+    enabled: yes
+    daemon_reload: yes
+  tags: agents,restart
+
+- name: "Enable metricbeat modules"
+  shell: "metricbeat modules enable elasticsearch-xpack"
+  tags: agents
+
+- name: "Enable metricbeat modules"
+  shell: "metricbeat modules enable kibana-xpack"
+  tags: agents
+
+- name: "Enable metricbeat beat modules"
+  shell: "metricbeat modules enable beat-xpack"
+  tags: agents
+
+- name: "Enable metricbeat modules"
+  shell: "metricbeat modules enable logstash-xpack"
+  tags: agents
+
+- name: "enable filebeat modules"
+  shell: "filebeat modules enable system"
+  tags: agents
+
+- name: "enable elasticsearch modules"
+  shell: "filebeat modules enable elasticsearch"
+  tags: agents
+
+#- name: "Install setup dashboard"
+#  shell: "metricbeat setup"
+#  when: master_ip in inventory_hostname
+#  tags: agents
+
+#- name: "Install filebeat dashboard"
+#  shell: "filebeat setup"
+#  when: master_ip in inventory_hostname  
+#  tags: agents
+
+

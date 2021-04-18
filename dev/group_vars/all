@@ -1,0 +1,11 @@
+hadoop_master: DWH-HDFE-FILE1D
+hbase_master_host: DWH-HDFE-FILE1D
+hbase_backup_master: DWH-HDFE-APP1D
+env: mdm-dev  #avaliable values: mdm, mdm-test, mdm-dev
+hostmetadata: '"Linux" "MDM_dev"'
+master_ip: 10.19.72.142
+spark_master_ip: 10.19.72.142
+hive_master_hostname: DWH-HDFE-FILE1D
+database_master_hostname: DWH-POSTGR-DB1D
+spark_master_host: DWH-HDFE-FILE1D
+

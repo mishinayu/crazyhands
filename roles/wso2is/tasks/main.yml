@@ -1,0 +1,96 @@
+---
+# tasks file for wso2is
+- name: "Create wso2 group"
+  group: 
+    name: "{{ wso2_group }}"
+    state: present
+  tags: wso2is
+
+- name: "Add wso2 user"
+  user: 
+    name: "{{ wso2_user }}" 
+    shell: /bin/bash 
+    group: "{{ wso2_group }}"
+    state: present
+  tags: wso2is
+
+- name: "Add wso2is repo"
+  get_url:
+    url: https://bintray.com/wso2/rpm/rpm
+    dest: /etc/yum.repos.d/bintray--wso2-rpm.repo
+  ignore_errors: yes
+  tags: wso2is
+
+- name: "Enable wso2is repo"
+  ini_file:
+    dest: /etc/yum.repos.d/bintray--wso2-rpm.repo
+    section: 'bintray--wso2-rpm'
+    option: enabled
+    value: 1
+  tags: wso2is
+
+- name: "Yum install WSO2IS"
+  yum:
+    name: wso2is-{{ wso2is_version }}
+    state: present 
+  tags: wso2is
+
+- name: Download postgresql jdbc jar-file
+  get_url:
+    url: "{{ jdbc_url_path }}"
+    dest: "{{ wso2is_home }}/repository/components/lib/{{ jdbc_file }}"
+  tags: wso2is
+
+#- name: "Copy deployment.toml file"
+#  template:
+#    src: "deployment.toml.j2"
+#    dest: "{{ wso2is_home }}/repository/conf/deployment.toml"
+#    backup: yes
+#    owner: "{{ wso2_user }}"
+#    group: "{{ wso2_group }}"
+#    mode: 0644
+#  tags: wso2is
+
+- name: "Remove deployment.toml"
+  file:
+    path: "{{ wso2is_home }}/repository/conf/deployment.toml"
+    state: absent
+  tags: wso2is
+
+- name: "Copy master-datasources.xml file"
+  template:
+    src: "master-datasources.xml.j2"
+    dest: "{{ wso2is_home }}/repository/conf/datasources/master-datasources.xml"
+    backup: yes
+    owner: "{{ wso2_user }}"
+    group: "{{ wso2_group }}"
+    mode: 0644
+  tags: wso2is
+
+- name: "Copy carbon.xml file"
+  template:
+    src: "carbon.xml.j2"
+    dest: "{{ wso2is_home }}/repository/conf/carbon.xml"
+    backup: yes
+    owner: "{{ wso2_user }}"
+    group: "{{ wso2_group }}"
+    mode: 0644
+  tags: wso2is
+
+- name: "Copy user-mgt.xml file"
+  template:
+    src: "user-mgt.xml.j2"
+    dest: "{{ wso2is_home }}/repository/conf/user-mgt.xml"
+    backup: yes
+    owner: "{{ wso2_user }}"
+    group: "{{ wso2_group }}"
+    mode: 0644
+  tags: wso2is
+
+- name: "Enable and start WSO2IS"
+  systemd:
+    name: wso2is-{{ wso2is_version }}
+    state: restarted
+    enabled: yes
+  tags: wso2is
+

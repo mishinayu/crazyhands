@@ -1,0 +1,206 @@
+---
+# tasks file for hadoop
+
+- name: Create hadoop Group
+  group:
+    name: "{{ hadoop_group }}"
+    state: present
+  tags: hadoop
+
+- name: Create hadoop User
+  user:
+    name: "{{ hadoop_user }}"
+    comment: "Hadoop administrator"
+    group: "{{ hadoop_group }}"
+    create_home: yes 
+    shell: /bin/bash
+  tags: hadoop
+
+- name: "Create SSH keys for the hadoop user and put it into this role's files directory"
+  shell: ssh-keygen -f "{{role_path}}/files/hadoop_user_id_rsa" -t rsa -N ''
+  args:
+    creates: "{{ role_path }}/files/hadoop_user_id_rsa"
+  delegate_to: localhost
+  run_once: true
+  tags: hadoop
+
+- name: "Make sure SSH directory for hadoop user exists"
+  file:
+    path: "{{ hadoop_uhome }}/.ssh"
+    state: directory
+    mode: 0700
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+  tags: hadoop
+
+- name: "Copy private SSH key for hadoop user"
+  copy:
+    src: hadoop_user_id_rsa
+    dest: "{{ hadoop_uhome }}/.ssh/id_rsa"
+    mode: 0600
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+  tags: hadoop
+
+- name: "Copy public SSH key for hadoop user"
+  copy:
+    src: hadoop_user_id_rsa.pub
+    dest: "{{ hadoop_uhome }}/.ssh/id_rsa.pub"
+    mode: 0644
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+  tags: hadoop
+
+- name: "Cross authorize this key among all hadoop servers"
+  lineinfile:
+    path: "{{ hadoop_uhome }}/.ssh/authorized_keys"
+    create: yes
+    mode: 0600
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+    line: "{{ lookup('file', 'hadoop_user_id_rsa.pub') }}"
+    state: present
+  tags: hadoop
+  
+- name: "Hadoop | Download hadoop version {{ hadoop_version }}"
+  get_url:
+    url: "{{ hadoop_download_url }}"
+    dest: "/tmp/hadoop-{{ hadoop_version }}.tar.gz"
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+  tags: hadoop
+
+- name: "Hadoop | Create /etc/hadoop directory"
+  file:
+    path: /etc/hadoop
+    state: directory
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+    mode: 0755
+  tags: hadoop
+
+- name: "Hadoop | Check if hadoop archive is already unpacked"
+  find:
+    paths: "{{ hadoop_home }}"
+    file_type: file
+    patterns: "core-site.xml"
+    recurse: yes
+  register: filesfound_hadoop
+  become: true
+  become_user: "{{ hadoop_user }}"
+  tags: hadoop
+
+- name: "Hadoop | Debug var filesfound_hadoop"
+  debug:
+    var: filesfound_hadoop.matched
+  tags: hadoop
+
+- name: "Hadoop | Extract hadoop archive"
+  unarchive:
+    src: "/tmp/hadoop-{{ hadoop_version }}.tar.gz"
+    dest: /etc/hadoop
+    owner: "{{ hadoop_user }}"
+    group: "{{ hadoop_group }}"
+    remote_src: yes
+  become: true
+  become_user: "{{ hadoop_user }}"
+  when:
+  - filesfound_hadoop.matched|int == 0
+  tags: hadoop
+
+- name: "Hadoop | Create HDFS directories"
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ hadoop_user}}"
+    group: "{{ hadoop_group }}"
+    mode: 0750
+  with_items:
+  - "{{ hdfs_tmp }}"
+  - "{{ hdfs_namenode }}"
+  - "{{ hdfs_datanode }}"
+  tags: hadoop
+ 
+- name: "Hadoop | Add the service scripts"
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: "{{ hadoop_user}}"
+    group: "{{ hadoop_group }}"
+  with_items:
+  - {src: "core-site.xml.j2", dest: "{{ hadoop_home }}/etc/hadoop/core-site.xml"}
+  - {src: "hdfs-site.xml.j2", dest: "{{ hadoop_home }}/etc/hadoop/hdfs-site.xml"}
+  - {src: "yarn-site.xml.j2", dest: "{{ hadoop_home }}/etc/hadoop/yarn-site.xml"}
+  - {src: "mapred-site.xml.j2", dest: "{{ hadoop_home }}/etc/hadoop/mapred-site.xml"}
+  tags: hadoop
+
+- name: "Hadoop | Copy template workersj2,slaves.j2 and masters.j2"
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: "{{ hadoop_user}}"
+    group: "{{ hadoop_group }}"
+    mode: 0644
+  with_items:
+  - {src: "slaves.j2", dest: "{{ hadoop_home }}/etc/hadoop/slaves"}
+  - {src: "workers.j2", dest: "{{ hadoop_home }}/etc/hadoop/workers"}
+  - {src: "masters.j2", dest: "{{ hadoop_home }}/etc/hadoop/masters"}
+  tags: hadoop
+
+- name: "Hadoop | Add JAVA_HOME to {{ hadoop_home}}/etc/hadoop/hadoop-env.sh file"
+  lineinfile:
+    dest: "{{ hadoop_home}}/etc/hadoop/hadoop-env.sh"
+    regexp: "^export JAVA_HOME"
+    line: "export JAVA_HOME=$(readlink -f /usr/bin/java | sed 's:/bin/java::')" 
+  tags: hadoop
+
+- name: "Hadoop | Copy template hadoop.service.j2"
+  template:
+    src: "hadoop.service.j2"
+    dest: /etc/systemd/system/hadoop.service
+  when:
+    - ansible_distribution == "RedHat" and ansible_distribution_major_version > '6'
+    - master_ip in inventory_hostname 
+  tags: hadoop
+
+
+- name: "Hadoop | check if HDFS already formatted"
+  shell: "{{ hadoop_home }}/bin/hadoop namenode -metadataVersion"
+  register: hdfs_metadata
+  args:
+    chdir: "{{ hadoop_home }}/bin"
+  become: true
+  become_user: "{{ hadoop_user }}"
+  ignore_errors: true
+  when: inventory_hostname == hdfs_namenodes[0]
+  environment:
+    HADOOP_HOME: "{{ hadoop_home }}"
+  tags: hadoop
+
+- name: "Hadoop | Debug hdfs commands"
+  debug:
+    var: hdfs_metadata
+  tags: hadoop
+
+- name: "Hadoop | Format HDFS filesystem"
+  shell: "{{ hadoop_home }}/bin/hadoop namenode -format"
+  args:
+    chdir: "{{ hadoop_home }}/bin"
+  become: true
+  become_user: "{{ hadoop_user }}"
+  ignore_errors: true
+  when: "inventory_hostname == hdfs_namenodes[0] and 'VERSION (No such file or directory)' in hdfs_metadata.stderr"
+  environment:
+    HADOOP_HOME: "{{ hadoop_home }}"
+  tags: hadoop
+
+- name: "Hadoop | Enable and start hadoop cluster"
+  systemd:
+    name: hadoop
+    state: restarted
+    enabled: yes
+    daemon_reload: yes
+  when: master_ip in inventory_hostname
+  tags: hadoop
+
+...

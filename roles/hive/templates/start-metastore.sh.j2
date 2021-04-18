@@ -1,0 +1,29 @@
+#!/bin/bash
+
+export HADOOP_HOME={{ hadoop_home }}
+export HIVE_HOME={{ hive_home }}
+export PATH=$PATH:{{ hive_home }}/bin:{{ hadoop_home }}/bin
+
+startme() {
+  if [[ ! -d {{ hive_uhome }}/hivemetastorelog ]]	
+  then
+ 	mkdir -p {{ hive_uhome }}/hivemetastorelog
+  fi
+  echo "Starting hive_metastore.."
+  cd {{ hive_uhome }}/hivemetastorelog
+  nohup hive --service metastore &
+}
+
+stopme(){
+  echo "Stoping hive_metastore.."
+  kill $(ps aux | grep -i org.apache.hadoop.hive.metastore.HiveMetaStore | awk {'print $2'}) 
+}
+case "$1" in 
+    start)   startme ;;
+    stop)    stopme ;;
+    restart) stopme; startme ;;
+    *) echo "usage: $0 start|stop|restart" >&2
+       exit 1
+       ;;
+esac
+
