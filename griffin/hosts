@@ -1,0 +1,14 @@
+[griffin]
+bda51node12
+
+[elasticsearch]
+bda51node12
+
+[postgresql]
+bda51node13
+
+[nodejs]
+bda51node12
+
+[livy]
+bda51node12

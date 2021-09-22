@@ -1,0 +1,55 @@
+- name: "Setup PostgreSQL"
+  hosts: postgresql
+  tasks:
+    - name: "Display  hostnames"
+      debug:
+        msg: "The hostname is {{ ansible_hostname }} and the OS is {{ ansible_os_family }}"
+
+    - name: "Run common role"
+      import_role:
+        name: pg
+
+- name: "Setup NodeJS"
+  hosts: nodejs
+  tasks:
+    - name: "Display  hostnames"
+      debug:
+        msg: "The hostname is {{ ansible_hostname }} and the OS is {{ ansible_os_family }}"
+
+    - name: "Run common role"
+      import_role:
+        name: nodejs
+
+- name: "Setup Elasticsearch"
+  hosts: elasticsearch
+  tasks:
+    - name: "Display  hostnames"
+      debug:
+        msg: "The hostname is {{ ansible_hostname }} and the OS is {{ ansible_os_family }}"
+
+    - name: "Run common role"
+      import_role:
+        name: elasticsearch
+
+
+- name: "Setup Apache Griffin"
+  hosts: livy
+  tasks:
+    - name: "Display  hostnames"
+      debug:
+        msg: "The hostname is {{ ansible_hostname }} and the OS is {{ ansible_os_family }}"
+
+    - name: "Run common role"
+      import_role:
+        name: livy
+
+- name: "Setup Apache Griffin"
+  hosts: griffin
+  tasks:
+    - name: "Display  hostnames"
+      debug:
+        msg: "The hostname is {{ ansible_hostname }} and the OS is {{ ansible_os_family }}"
+
+    - name: "Run common role"
+      import_role:
+        name: griffin
