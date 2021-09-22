@@ -1,0 +1,202 @@
+---
+# tasks file for airflow
+- name: Create airflow Group
+  group:
+    name: "{{ airflow_group }}"
+    state: present
+  tags: air
+
+- name: Create airflow User
+  user:
+    name: "{{ airflow_user }}"
+    comment: "Airflow administrator"
+    group: "{{ airflow_group }}"
+    create_home: yes 
+    shell: /bin/bash
+  tags: air
+
+- name: "Create SSH keys for the airflow user and put it into this role's files directory"
+  shell: ssh-keygen -f "{{role_path}}/files/airflow_user_id_rsa" -t rsa -N ''
+  args:
+    creates: "{{ role_path }}/files/airflow_user_id_rsa"
+  delegate_to: localhost
+  run_once: true
+  tags: air
+
+- name: "Make sure SSH directory for airflow user exists"
+  file:
+    path: "{{ airflow_uhome }}/.ssh"
+    state: directory
+    mode: 0700
+    owner: "{{ airflow_user }}"
+    group: "{{ airflow_group }}"
+  tags: air
+
+- name: "Copy private SSH key for airflow user"
+  copy:
+    src: airflow_user_id_rsa
+    dest: "{{ airflow_uhome }}/.ssh/id_rsa"
+    mode: 0600
+    owner: "{{ airflow_user }}"
+    group: "{{ airflow_group }}"
+  tags: air
+
+- name: "Copy public SSH key for airflow user"
+  copy:
+    src: airflow_user_id_rsa.pub
+    dest: "{{ airflow_uhome }}/.ssh/id_rsa.pub"
+    mode: 0644
+    owner: "{{ airflow_user }}"
+    group: "{{ airflow_group }}"
+  tags: air
+
+- name: "Cross authorize this key among all airflow servers"
+  lineinfile:
+    path: "{{ airflow_uhome }}/.ssh/authorized_keys"
+    create: yes
+    mode: 0600
+    owner: "{{ airflow_user }}"
+    group: "{{ airflow_group }}"
+    line: "{{ lookup('file', 'airflow_user_id_rsa.pub') }}"
+    state: present
+  tags: air
+
+- name: "Airflow | Create /data/airflow directory"
+  file:
+    path: /data/airflow
+    state: directory
+    owner: "{{ airflow_user }}"
+    group: "{{ airflow_group }}"
+    mode: 0755
+  tags: air
+
+- name: "Airflow | Create /etc/airflow directory"
+  file:
+    path: /etc/airflow
+    state: directory
+    owner: "{{ airflow_user }}"
+    group: "{{ airflow_group }}"
+    mode: 0755
+  tags: air
+
+- name: "Airflow | Create /data/airflow/dags directory"
+  file:
+    path: /data/airflow/dags
+    state: directory
+    owner: "{{ airflow_user }}"
+    group: "{{ airflow_group }}"
+    mode: 0755
+  tags: air
+
+- name: "Airflow | Create /data/airflow/plugins directory"
+  file:
+    path: /data/airflow/plugins
+    state: directory
+    owner: "{{ airflow_user }}"
+    group: "{{ airflow_group }}"
+    mode: 0755
+  tags: air
+
+- name: sysconfig airflow env
+  template:
+     src: airflow.j2
+     dest: "/etc/sysconfig/airflow"
+     mode: 0644
+  tags: air
+
+- name: "Add  environment variables to .bash_profile"
+  blockinfile:
+    path: "{{ airflow_uhome}}/.bash_profile"
+    create: yes
+    owner: "{{ airflow_user }}"
+    group: "{{ airflow_group }}"
+    mode: 0400
+    block: |
+      PATH=$PATH:$HOME/.local/bin:$HOME/bin:/opt/anaconda38/bin:/opt/anaconda38/bin/gunicorn
+      export AIRFLOW_HOME=/etc/airflow
+      export AIRFLOW_CONFIG=/etc/airflow/airflow.cfg
+    state: present
+  tags: air
+
+- name: "Airflow | Copy template airflow-scheduler.service.j2"
+  template:
+    src: "airflow-scheduler.service.j2"
+    dest: /etc/systemd/system/airflow-scheduler.service
+  when: inventory_hostname in groups['airflow_scheduler']
+  tags: air
+
+- name: "Airflow | Copy template airflow-webserver.service.j2"
+  template:
+    src: "airflow-webserver.service.j2"
+    dest: /etc/systemd/system/airflow-webserver.service
+  when: inventory_hostname in groups['airflow_webserver']
+  tags: air
+
+- name: "Airflow | Copy template airflow-worker.service.j2"
+  template:
+    src: "airflow-worker.service.j2"
+    dest: /etc/systemd/system/airflow-worker.service
+  when: inventory_hostname in groups['airflow_worker']
+  tags: air
+
+- name: "Airflow | Copy template airflow-flower.service.j2"
+  template:
+    src: "airflow-flower.service.j2"
+    dest: /etc/systemd/system/airflow-flower.service
+  when: inventory_hostname in groups['airflow_flower']
+  tags: air
+
+#- name: Install apache-airflow
+#  pip:
+#    name: apache-airflow
+#    state: present
+#    executable: pip3 
+#    version: "{{ airflow_version }}"
+#  become: true
+#  tags: air
+
+- name: Push Airflow Configurations
+  template:
+     src: airflow.cfg.j2
+     dest: "{{ airflow_config_dir }}/airflow.cfg"
+     mode: 0644
+     owner: "{{ airflow_user }}"
+     group: "{{ airflow_group }}"
+  tags: air
+
+- name: "Airflow | Enable and start airflow-webserver.service"
+  systemd:
+    name: airflow-webserver.service
+    state: restarted
+    enabled: yes
+    daemon_reload: yes
+  when: inventory_hostname in groups['airflow_webserver']
+  tags: air
+
+- name: "Airflow | Enable and start airflow-scheduler.service"
+  systemd:
+    name: airflow-scheduler.service
+    state: restarted
+    enabled: yes
+    daemon_reload: yes
+  when: inventory_hostname in groups['airflow_scheduler']
+  tags: air
+
+- name: "Airflow | Enable and start airflow-worker.service"
+  systemd:
+    name: airflow-worker.service
+    state: restarted
+    enabled: yes
+    daemon_reload: yes
+  when: inventory_hostname in groups['airflow_worker']
+  tags: air
+
+- name: "Airflow | Enable and start airflow-flower.service"
+  systemd:
+    name: airflow-flower.service
+    state: restarted
+    enabled: yes
+    daemon_reload: yes
+  when: inventory_hostname in groups['airflow_flower']
+  tags: air
+

@@ -1,0 +1,57 @@
+---
+# defaults file for airflow
+master_ip: 10.227.33.81
+airflow_uhome: /home/airflow
+airflow_user: airflow
+airflow_group: airflow
+airflow_home: /etc/airflow
+airflow_data: /data/airflow
+airflow_config_dir: /etc/airflow
+airflow_version: 2.1.0
+hadoop_home: /etc/hadoop
+hive_home: /etc/hive
+
+# airflow.cfg
+airflow_dags_folder: /data/airflow
+airflow_executor_type: CeleryExecutor
+airflow_base_log_folder: /data/airflow
+airflow_parallelism: 10
+airflow_dag_concurrency: 4
+airflow_dags_are_paused_at_creation: True
+airflow_max_active_runs_per_dag: 4
+airflow_scheduler_runs: 2
+airflow_pidfile_folder: /run/airflow
+airflow_plugins_folder: /data/airflow
+airflow_colored_log_format: "[%%(blue)s%%(asctime)s%%(reset)s] {{ '{' }}%%(blue)s%%(filename)s:%%(reset)s%%(lineno)d} %%(log_color)s%%(levelname)s%%(reset)s - %%(log_color)s%%(message)s%%(reset)s"
+airflow_simple_log_format: "%%(asctime)s %%(levelname)s - %%(message)s"
+
+SCHEDULER_RUNS: 2
+airflow_webserver_port: 8080
+airflow_default_timezone: Europe/Moscow
+airflow_default_ui_timezone: Europe/Moscow
+airflow_default_queue: airflow
+
+# mysql
+mysql_root: root
+mysql_password: mySQLadmin
+mysql_user: airflow
+mysql_passwd: airflow
+mysql_host: bda51node03
+mysql_port: 3306
+airflow_db: airflow_db
+
+# postgresql
+pg_root: postgres
+pg_airflow_user: airflow_user
+pg_airflow_passwd: airflow_pass
+pg_airflow_db: airflow_db
+pg_port: 5432
+postgresql_host: bda51node13
+
+# rabbitmq
+mq_user: admin
+mq_passwd: admin
+mq_host: bda51node13
+mq_port: 5672
+mq_queue: "{{ airflow_default_queue }}"
+

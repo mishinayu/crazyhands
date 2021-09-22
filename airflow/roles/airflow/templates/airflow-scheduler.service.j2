@@ -1,0 +1,17 @@
+[Unit]
+Description=Airflow scheduler daemon
+After=network.target
+After=systemd-user-sessions.service
+After=network-online.target
+
+[Service]
+EnvironmentFile=/etc/sysconfig/airflow
+User=airflow
+Group=airflow
+Type=simple
+ExecStart=/usr/bin/bash -c 'source /opt/anaconda38/bin/activate ; airflow scheduler'
+Restart=always
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

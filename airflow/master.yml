@@ -1,0 +1,46 @@
+- name: "Setup  project"
+  hosts: all
+  tasks:
+    - name: "Display  hostnames"
+      debug:
+        msg: "The hostname is {{ ansible_hostname }} and the OS is {{ ansible_os_family }}"
+    
+    - name: "Run common role"
+      import_role:
+        name: common
+
+
+- name: "Setup PostgreSQL"
+  hosts: postgresql
+  tasks:
+    - name: "Display  hostnames"
+      debug:
+        msg: "The hostname is {{ ansible_hostname }} and the OS is {{ ansible_os_family }}"
+
+    - name: "Run common role"
+      import_role:
+        name: pg
+
+
+- name: "Setup RabbitMQ"
+  hosts: rabbitmq
+  tasks:
+    - name: "Display  hostnames"
+      debug:
+        msg: "The hostname is {{ ansible_hostname }} and the OS is {{ ansible_os_family }}"
+
+    - name: "Run common role"
+      import_role:
+        name: rabbitmq
+
+
+- name: "Setup  Airflow"
+  hosts: airflow
+  tasks:
+    - name: "Display  hostnames"
+      debug:
+        msg: "The hostname is {{ ansible_hostname }} and the OS is {{ ansible_os_family }}"
+
+    - name: "Run common role"
+      import_role:
+        name: airflow
